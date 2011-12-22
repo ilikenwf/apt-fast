@@ -2,7 +2,7 @@
 About:
 ====================
 
-apt-fast is a shellscript wrapper for apt-get that drastically can improve download
+apt-fast is a shellscript wrapper for apt-get that can drastically improve apt download
 times by downloading packages in parallel, with multiple connections per package.
 
 ====================
@@ -29,6 +29,7 @@ Consider apt-fast and all of it's derivatives licensed under the GNU GPLv3.
 ====================
 Special thanks:
 ====================
+
 Travis/travisn000 - support for complex apt-get commands
 Allan Hoffmeister - aria2c support
 Abhishek Sharma - aria2c with proxy support

@@ -20,6 +20,9 @@ for your download manager before using it, and configure the other options!
 Then, you should be ready to use it - simply run apt-fast instead of apt-get any time
 you find yourself needing to manage packages!
 
+AUTOCOMPLETION: Also included is apt-fast-autocomplete.sh, which you can use if you so 
+desire.
+
 ====================
 License:
 ====================

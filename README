@@ -1,0 +1,37 @@
+====================
+About:
+====================
+
+apt-fast is a shellscript wrapper for apt-get that drastically can improve download
+times by downloading packages in parallel, with multiple connections per package.
+
+====================
+Setup/Install:
+====================
+
+Some distros, such as PCLinuxOS include apt-fast in their repos. For those of you
+who need to manually install it, simply download apt-fast.sh and, as root, move it
+to /usr/sbin or /usr/bin. Then, rename it apt-fast, and chmod+ x apt-fast as root.
+
+You need to have a good download manager installed - aria2c and axel are favorites
+for this script. Make sure and open apt-fast in a text editor and uncomment the line
+for your download manager before using it, and configure the other options!
+
+Then, you should be ready to use it - simply run apt-fast instead of apt-get any time
+you find yourself needing to manage packages!
+
+====================
+License:
+====================
+
+Consider apt-fast and all of it's derivatives licensed under the GNU GPLv3.
+
+====================
+Special thanks:
+====================
+Travis/travisn000 - support for complex apt-get commands
+Allan Hoffmeister - aria2c support
+Abhishek Sharma - aria2c with proxy support
+Richard Klien - Autocompletion, Download Size Checking (made for on ubuntu, untested on other distros)
+Patrick Kramer Ruiz - suggestions - see Suggestions.txt
+Sergio Silva - test to see if axel is installed, root detection/sudo autorun, lock file check/creation

@@ -16,7 +16,7 @@
 #_DOWNLOADER='aria2c -s 20 -j 10 --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
 
 # axel:
-#_DOWNLOADER='cat /tmp/apt-fast.list|xargs -l1 axel -a' # axel
+_DOWNLOADER='cat /tmp/apt-fast.list|xargs -l1 axel -a' # axel
 
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #
@@ -31,12 +31,13 @@ LCK_FILE=/var/lock/apt-fast.lck
 if [ -f "${LCK_FILE}" ]; then
 	echo "Either you stopped apt-fast in the middle of work or it's already running."
 	echo "If you think apt-fast isn't running, you may delete /var/lock/apt-fast.lck and try again."
+	exit 100
 else
 	touch $LCK_FILE
 fi
 
 # Make sure one of the download managers is enabled
-[ $_DOWNLOADER -eq '' ] ||echo "You must configure apt-fast to use axel or aria2c"
+[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && exit 1;
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then

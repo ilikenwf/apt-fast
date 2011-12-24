@@ -6,17 +6,24 @@
 # CONFIGURATION OPTIONS                                           #
 ###################################################################
 
+# Maximum number of connections
+_MAXNUM=5
+
+# Note that the download manager you choose has other options - feel free
+# to setup your own _DOWNLOADER line or customize one of the ones below...
+# they're simply there for example purposes, and to provide sane defaults
+
 # Download manager selection (choose one by uncommenting one 
 # #_DOWNLOADER line
 
 # aria2c:
-#_DOWNLOADER='aria2c -c -j5 --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
+#_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
 
 # aria2c with a proxy (set username, proxy, ip and password!)
-#_DOWNLOADER='aria2c -s 20 -j 10 --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
+#_DOWNLOADER='aria2c -s 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
 
 # axel:
-#_DOWNLOADER='cat /tmp/apt-fast.list|xargs -l1 axel -a' # axel
+#_DOWNLOADER='cat /tmp/apt-fast.list|xargs -l1 axel -n ${_MAXNUM} -a' # axel
 
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #

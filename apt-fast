@@ -42,7 +42,7 @@ else
 fi
 
 # Make sure one of the download managers is enabled
-[ $_DOWNLOADER -eq '' ] ||echo "You must configure apt-fast to use axel or aria2c"
+[ $_DOWNLOADER -ne '' ] || echo "You must configure apt-fast to use axel or aria2c"
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then

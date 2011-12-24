@@ -13,10 +13,9 @@ Setup/Install:
 ====================
 
 Some distros, such as PCLinuxOS include apt-fast in their repos. For those of you
-who need to manually install it, simply download apt-fast.sh and, as root, move it
-to /usr/sbin or /usr/bin. Then, rename it apt-fast, and chmod+ x apt-fast as root:
+who need to manually install it, download it and perform the following:
 
-cp ./apt-fast.sh /usr/sbin/apt-fast
+cp ./apt-fast /usr/sbin/
 chmod +x /usr/sbin/apt-fast
 
 You need to have a good download manager installed - aria2c and axel are favorites
@@ -29,7 +28,6 @@ apt-get install axel
 
 Then, you should be ready to use it - simply run apt-fast instead of apt-get any time
 you find yourself needing to manage packages!
-
 
 Debian (and possibly others) autocompletion:
 

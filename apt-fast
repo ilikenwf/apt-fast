@@ -13,8 +13,7 @@ _MAXNUM=5
 # to setup your own _DOWNLOADER line or customize one of the ones below...
 # they're simply there for example purposes, and to provide sane defaults
 
-# Download manager selection (choose one by uncommenting one 
-# #_DOWNLOADER line
+# Download manager selection (choose one by uncommenting one #_DOWNLOADER line)
 
 # aria2c:
 #_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'

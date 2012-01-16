@@ -47,6 +47,7 @@ Special thanks:
 Travis/travisn000 - support for complex apt-get commands
 Allan Hoffmeister - aria2c support
 Abhishek Sharma - aria2c with proxy support
+Luca Marchetti - improvements on the locking system and downloader execution
 Richard Klien - Autocompletion, Download Size Checking (made for on ubuntu, untested on other distros)
 Patrick Kramer Ruiz - suggestions - see Suggestions.txt
 Sergio Silva - test to see if axel is installed, root detection/sudo autorun, lock file check/creation

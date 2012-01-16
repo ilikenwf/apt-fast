@@ -22,11 +22,17 @@ _MAXNUM=5
 #_DOWNLOADER='aria2c -s 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
 
 # axel:
-#_DOWNLOADER='cat /tmp/apt-fast.list|xargs -l1 axel -n ${_MAXNUM} -a' # axel
+#_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
 
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #
 ###################################################################
+
+_unlock()
+{
+	rm -f $LCK_FILE
+}
+
 
 # Check for proper priveliges
 [ "`whoami`" = root ] || exec sudo "$0" "$@"
@@ -34,16 +40,16 @@ _MAXNUM=5
 # Define our lock location
 LCK_FILE=/var/lock/apt-fast.lck
 
-if [ -f "${LCK_FILE}" ]; then
+lockfile-create -r 0 -q -l "${LCK_FILE}" || {
 	echo "Either you stopped apt-fast in the middle of work or it's already running."
 	echo "If you think apt-fast isn't running, you may delete /var/lock/apt-fast.lck and try again."
 	exit 100
-else
-	touch $LCK_FILE
-fi
+}
+
+trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
 
 # Make sure one of the download managers is enabled
-[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && exit 1;
+[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1;
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
@@ -56,9 +62,9 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   # Strip out the URI's, and download the packages with Axel for speediness
   # I found this regex elsewhere, showing how to manually strip package URI's you may need...thanks to whoever wrote it
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > /tmp/apt-fast.list
-  exec $_DOWNLOADER  
-
-  # Install our downloaded packages
+	eval ${_DOWNLOADER}
+  
+	# Install our downloaded packages
   apt-get $@;
 
   echo -e "\nDone! Verify that all packages were installed successfully. If errors are found, run apt-get clean as root and try again using apt-get directly.\n";
@@ -69,4 +75,4 @@ fi
 
 # Remove our lock
 
-rm $LCK_FILE
+_unlock

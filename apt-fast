@@ -33,7 +33,6 @@ _unlock()
 	rm -f $LCK_FILE
 }
 
-
 # Check for proper priveliges
 [ "`whoami`" = root ] || exec sudo "$0" "$@"
 

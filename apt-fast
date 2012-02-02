@@ -28,8 +28,7 @@ _MAXNUM=5
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #
 ###################################################################
 
-_unlock()
-{
+_unlock() {
 	rm -f $LCK_FILE
 }
 

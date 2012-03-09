@@ -15,11 +15,11 @@ fi
 
 case $DOWNLOADER in
 axel)
-    _DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${MAXIMUM_CONNECTIONS} -a'
+    _DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${MAXIMUM_CONNECTIONS} -a ${DOWNLOADER_FLAGS}'
     ;;
 
 aria2c)
-    _DOWNLOADER='aria2c -c -j ${MAXIMUM_CONNECTIONS} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
+    _DOWNLOADER='aria2c -c -j ${MAXIMUM_CONNECTIONS} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0 ${DOWNLOADER_FLAGS}'
     ;;
 
 *)

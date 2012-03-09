@@ -6,23 +6,26 @@
 # CONFIGURATION OPTIONS                                           #
 ###################################################################
 
-# Maximum number of connections
-_MAXNUM=5
+if [ -f /etc/apt-fast ]; then
+    . /etc/apt-fast
+else
+    echo "No configuration file found in /etc/apt-fast"
+    exit 1
+fi
 
-# Note that the download manager you choose has other options - feel free
-# to setup your own _DOWNLOADER line or customize one of the ones below...
-# they're simply there for example purposes, and to provide sane defaults
+case $DOWNLOADER in
+axel)
+    _DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${MAXIMUM_CONNECTIONS} -a ${DOWNLOADER_FLAGS}'
+    ;;
 
-# Download manager selection (choose one by uncommenting one #_DOWNLOADER line)
+aria2c)
+    _DOWNLOADER='aria2c -c -j ${MAXIMUM_CONNECTIONS} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0 ${DOWNLOADER_FLAGS}'
+    ;;
 
-# aria2c:
-#_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
-
-# aria2c with a proxy (set username, proxy, ip and password!)
-#_DOWNLOADER='aria2c -s 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
-
-# axel:
-#_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
+*)
+    echo "You must configure apt-fast to use axel or aria2c"
+    exit 1
+esac
 
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #
@@ -45,9 +48,6 @@ lockfile-create -r 0 -q -l "${LCK_FILE}" || {
 }
 
 trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
-
-# Make sure one of the download managers is enabled
-[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1;
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then

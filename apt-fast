@@ -6,6 +6,13 @@
 # CONFIGURATION OPTIONS                                           #
 ###################################################################
 
+if [ -f /etc/apt-fast ]; then
+    . /etc/apt-fast
+else
+    echo "No configuration file found in /etc/apt-fast"
+    exit 1
+fi
+
 # Maximum number of connections
 _MAXNUM=5
 

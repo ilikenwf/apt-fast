@@ -15,34 +15,17 @@ fi
 
 case $DOWNLOADER in
 axel)
-    _DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a'
+    _DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${MAXIMUM_CONNECTIONS} -a'
     ;;
 
 aria2c)
-    _DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
+    _DOWNLOADER='aria2c -c -j ${MAXIMUM_CONNECTIONS} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
     ;;
 
 *)
     echo "You must configure apt-fast to use axel or aria2c"
     exit 1
 esac
-# Maximum number of connections
-_MAXNUM=5
-
-# Note that the download manager you choose has other options - feel free
-# to setup your own _DOWNLOADER line or customize one of the ones below...
-# they're simply there for example purposes, and to provide sane defaults
-
-# Download manager selection (choose one by uncommenting one #_DOWNLOADER line)
-
-# aria2c:
-#
-
-# aria2c with a proxy (set username, proxy, ip and password!)
-#_DOWNLOADER='aria2c -s 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
-
-# axel:
-#
 
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #
@@ -78,7 +61,7 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   # I found this regex elsewhere, showing how to manually strip package URI's you may need...thanks to whoever wrote it
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > /tmp/apt-fast.list
 	eval ${_DOWNLOADER}
-
+  
 	# Install our downloaded packages
   apt-get $@;
 

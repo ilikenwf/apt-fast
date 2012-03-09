@@ -13,6 +13,19 @@ else
     exit 1
 fi
 
+case $DOWNLOADER in
+axel)
+    _DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a'
+    ;;
+
+aria2c)
+    _DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
+    ;;
+
+*)
+    echo "You must configure apt-fast to use axel or aria2c"
+    exit 1
+esac
 # Maximum number of connections
 _MAXNUM=5
 
@@ -23,13 +36,13 @@ _MAXNUM=5
 # Download manager selection (choose one by uncommenting one #_DOWNLOADER line)
 
 # aria2c:
-#_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
+#
 
 # aria2c with a proxy (set username, proxy, ip and password!)
 #_DOWNLOADER='aria2c -s 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
 
 # axel:
-#_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
+#
 
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #
@@ -53,9 +66,6 @@ lockfile-create -r 0 -q -l "${LCK_FILE}" || {
 
 trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
 
-# Make sure one of the download managers is enabled
-[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1;
-
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   echo "Working...";
@@ -68,7 +78,7 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   # I found this regex elsewhere, showing how to manually strip package URI's you may need...thanks to whoever wrote it
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > /tmp/apt-fast.list
 	eval ${_DOWNLOADER}
-  
+
 	# Install our downloaded packages
   apt-get $@;
 

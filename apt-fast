@@ -1,19 +1,25 @@
 # !/bin/sh
 # apt-fast v1.4 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
-# Use this just like apt-get for faster package downloading.
+# Use this just like aptitude or apt-get for faster package downloading.
 
 ###################################################################
-# CONFIGURATION OPTIONS                                           #
+# CONFIGURATION OPTIONS                                           
 ###################################################################
 
 # Maximum number of connections
 _MAXNUM=5
 
-# Note that the download manager you choose has other options - feel free
-# to setup your own _DOWNLOADER line or customize one of the ones below...
-# they're simply there for example purposes, and to provide sane defaults
+# Use aptitude or apt-fast?
+# Note that for outputting the package URI list, we always use apt-get
+# ...since aptitude can't do this
+_APTMGR=aptitude
 
-# Download manager selection (choose one by uncommenting one #_DOWNLOADER line)
+# Note that the manager you choose has other options - feel free
+# to setup your own _DOWNLOADER or customize one of the ones below
+# they're simply here as examples, and to provide sane defaults
+
+# Download manager selection 
+# (choose one by uncommenting one #_DOWNLOADER line)
 
 # aria2c:
 #_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
@@ -25,7 +31,7 @@ _MAXNUM=5
 #_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
 
 ###################################################################
-# DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! #
+# DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING!
 ###################################################################
 
 _unlock() {
@@ -39,45 +45,47 @@ _unlock() {
 LCK_FILE=/var/lock/apt-fast.lck
 
 lockfile-create -r 0 -q -l "${LCK_FILE}" || {
-	echo "Either you stopped apt-fast in the middle of work or it's already running."
-	echo "If you think apt-fast isn't running, you may delete /var/lock/apt-fast.lck and try again."
+	echo "Either you stopped early, or apt-fast is already running."
+	echo "If apt-fast isn't running, delete /var/lock/apt-fast.lck"
+	echo "..and try again."
 	exit 100
 }
 
 trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
 
 # Make sure one of the download managers is enabled
-[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1;
+[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   echo "Working...";
 
-  # Test if apt-fast directory is present where apt-get normally puts downloaded packages
+  # Test if apt-fast directory is present where we put packages
   if [ ! -f /var/cache/apt/archives/apt-fast ] ; then
   	mkdir /var/cache/apt/archives/apt-fast;
   fi
-  cd /var/cache/apt/archives/apt-fast
+  cd /var/cache/apt/archives/apt-fast;
 
-  # Have apt-get print the information, including the URI's to the packages
-  # Strip out the URI's, and download the packages with Axel for speediness
-  # I found this regex elsewhere, showing how to manually strip package URI's you may need...thanks to whoever wrote it
+  # Get the package URL's
+  # note aptitude doesn't have this functionality
+  # so we use apt-get only
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > /tmp/apt-fast.list
-	eval ${_DOWNLOADER}
   
-  # move all debs to the apt-get install directory force move to ensure 
+  # Download the packages
+  eval ${_DOWNLOADER}
+  
+  # Move all packages to the apt install directory by force to ensure 
   # already existing debs which may be incomplete are replaced
   mv -f *.deb /var/cache/apt/archives/
   
   # Install our downloaded packages
-  apt-get $@;
+  ${_APTMGR} $@;
 
   echo -e "\nDone! Verify that all packages were installed successfully. If errors are found, run apt-get clean as root and try again using apt-get directly.\n";
 
 else
-   apt-get $@;
+   ${_APTMGR} $@;
 fi
 
 # Remove our lock
-
 _unlock

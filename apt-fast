@@ -19,7 +19,7 @@ _MAXNUM=5
 #_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
 
 # aria2c with a proxy (set username, proxy, ip and password!)
-#_DOWNLOADER='aria2c -s 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
+#_DOWNLOADER='aria2c -c 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
 
 # axel:
 #_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
@@ -53,8 +53,11 @@ trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   echo "Working...";
 
-  # Go into the directory apt-get normally puts downloaded packages
-  cd /var/cache/apt/archives/;
+  # Test if apt-fast directory is present where apt-get normally puts downloaded packages
+  if [ ! -f /var/cache/apt/archives/apt-fast ] ; then
+  	mkdir /var/cache/apt/archives/apt-fast;
+  fi
+  cd /var/cache/apt/archives/apt-fast
 
   # Have apt-get print the information, including the URI's to the packages
   # Strip out the URI's, and download the packages with Axel for speediness
@@ -62,7 +65,11 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > /tmp/apt-fast.list
 	eval ${_DOWNLOADER}
   
-	# Install our downloaded packages
+  # move all debs to the apt-get install directory force move to ensure 
+  # already existing debs which may be incomplete are replaced
+  mv -f *.deb /var/cache/apt/archives/
+  
+  # Install our downloaded packages
   apt-get $@;
 
   echo -e "\nDone! Verify that all packages were installed successfully. If errors are found, run apt-get clean as root and try again using apt-get directly.\n";

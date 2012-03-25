@@ -61,7 +61,7 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
   echo "Working...";
 
   # Test if apt-fast directory is present where we put packages
-  if [ ! -f /var/cache/apt/archives/apt-fast ] ; then
+  if [ ! -d /var/cache/apt/archives/apt-fast ] ; then
   	mkdir /var/cache/apt/archives/apt-fast;
   fi
   cd /var/cache/apt/archives/apt-fast;

@@ -1,5 +1,5 @@
 # !/bin/sh
-# apt-fast v1.4 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
+# apt-fast v1.5 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
 # Use this just like aptitude or apt-get for faster package downloading.
 
 ###################################################################

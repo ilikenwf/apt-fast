@@ -57,7 +57,7 @@ trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
 [ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
-if echo "$@" | grep -q "upgrade\|install\|dist-upgrade"; then
+if echo "$@" | grep -q "upgrade\|install\|dist-upgrade|full-upgrade"; then
   echo "Working...";
 
   # Test if apt-fast directory is present where we put packages

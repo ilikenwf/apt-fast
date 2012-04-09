@@ -35,7 +35,7 @@ _APTMGR=aptitude
 ###################################################################
 
 _unlock() {
-	rm -f $LCK_FILE
+	rmdir $LCK_FILE
 }
 
 # Check for proper priveliges
@@ -44,14 +44,14 @@ _unlock() {
 # Define our lock location
 LCK_FILE=/var/lock/apt-fast.lck
 
-lockfile-create -r 0 -q -l "${LCK_FILE}" || {
+mkdir ${LCK_FILE} || {
 	echo "Either you stopped early, or apt-fast is already running."
 	echo "If apt-fast isn't running, delete /var/lock/apt-fast.lck"
 	echo "..and try again."
 	exit 100
 }
 
-trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
+trap " [ -e ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
 
 # Make sure one of the download managers is enabled
 [ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1

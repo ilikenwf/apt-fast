@@ -3,11 +3,11 @@
 # Use this just like aptitude or apt-get for faster package downloading.
 
 ###################################################################
-# CONFIGURATION OPTIONS                                           
+# CONFIGURATION OPTIONS
 ###################################################################
 
 # Maximum number of connections
-_MAXNUM=5
+_MAXNUM=10
 
 # Use aptitude or apt-fast?
 # Note that for outputting the package URI list, we always use apt-get
@@ -18,24 +18,24 @@ _APTMGR=aptitude
 # to setup your own _DOWNLOADER or customize one of the ones below
 # they're simply here as examples, and to provide sane defaults
 
-# Download manager selection 
+# Download manager selection
 # (choose one by uncommenting one #_DOWNLOADER line)
 
 # aria2c:
-#_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
+#_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -$
 
 # aria2c with a proxy (set username, proxy, ip and password!)
-#_DOWNLOADER='aria2c -c 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
+#_DOWNLOADER='aria2c -c 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-f$
 
 # axel:
-#_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
+_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
 
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING!
 ###################################################################
 
 _unlock() {
-	rm -f $LCK_FILE
+        rmdir $LCK_FILE
 }
 
 # Check for proper priveliges
@@ -44,14 +44,14 @@ _unlock() {
 # Define our lock location
 LCK_FILE=/var/lock/apt-fast.lck
 
-lockfile-create -r 0 -q -l "${LCK_FILE}" || {
-	echo "Either you stopped early, or apt-fast is already running."
-	echo "If apt-fast isn't running, delete /var/lock/apt-fast.lck"
-	echo "..and try again."
-	exit 100
+mkdir $LCK_FILE || {
+        echo "Either you stopped early, or apt-fast is already running."
+        echo "If apt-fast isn't running, delete /var/lock/apt-fast.lck"
+        echo "..and try again."
+        exit 100
 }
 
-trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
+trap " [ -e ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
 
 # Make sure one of the download managers is enabled
 [ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1
@@ -62,7 +62,7 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade|full-upgrade"; then
 
   # Test if apt-fast directory is present where we put packages
   if [ ! -d /var/cache/apt/archives/apt-fast ] ; then
-  	mkdir /var/cache/apt/archives/apt-fast;
+        mkdir /var/cache/apt/archives/apt-fast;
   fi
   cd /var/cache/apt/archives/apt-fast;
 
@@ -70,18 +70,18 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade|full-upgrade"; then
   # note aptitude doesn't have this functionality
   # so we use apt-get only
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > /tmp/apt-fast.list
-  
+
   # Download the packages
   eval ${_DOWNLOADER}
-  
-  # Move all packages to the apt install directory by force to ensure 
+
+  # Move all packages to the apt install directory by force to ensure
   # already existing debs which may be incomplete are replaced
   mv -f *.deb /var/cache/apt/archives/
-  
+
   # Install our downloaded packages
   ${_APTMGR} $@;
 
-  echo -e "\nDone! Verify that all packages were installed successfully. If errors are found, run apt-get clean as root and try again using apt-get directly.\n";
+  echo -e "\nDone! Verify that all packages were installed successfully. If errors are found, run apt-get c$
 
 else
    ${_APTMGR} $@;

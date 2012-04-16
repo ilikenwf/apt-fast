@@ -35,7 +35,7 @@ _APTMGR=aptitude
 ###################################################################
 
 _unlock() {
-	rmdir $LCK_FILE
+	test -d $LCK_FILE || rmdir $LCK_FILE
 }
 
 # Check for proper priveliges
@@ -46,7 +46,7 @@ LCK_FILE=/var/lock/apt-fast.lck
 
 mkdir ${LCK_FILE} || {
 	echo "Either you stopped early, or apt-fast is already running."
-	echo "If apt-fast isn't running, delete /var/lock/apt-fast.lck"
+	echo "If apt-fast isn't running, rmdir /var/lock/apt-fast.lck"
 	echo "..and try again."
 	exit 100
 }

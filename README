@@ -1,3 +1,6 @@
+THIS IS THE MODIFIED SCRIPT IF YOU LIKE THE ORIGINAL GOTO https://github.com/ilikenwf/apt-fast
+
+
 ====================
 About:
 ====================
@@ -17,6 +20,8 @@ who need to manually install it, download it and perform the following:
 
 cp ./apt-fast /usr/sbin/
 chmod +x /usr/sbin/apt-fast
+
+cp ./apt-fast.conf /etc
 
 You need to have a good download manager installed - aria2c and axel are favorites
 for this script. Make sure and open apt-fast in a text editor and uncomment the line

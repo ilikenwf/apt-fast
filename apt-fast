@@ -3,58 +3,33 @@
 # Use this just like aptitude or apt-get for faster package downloading.
 
 ###################################################################
-# CONFIGURATION OPTIONS                                           
-###################################################################
-
-# Maximum number of connections
-_MAXNUM=5
-
-# Use aptitude or apt-fast?
-# Note that for outputting the package URI list, we always use apt-get
-# ...since aptitude can't do this
-_APTMGR=aptitude
-
-# Note that the manager you choose has other options - feel free
-# to setup your own _DOWNLOADER or customize one of the ones below
-# they're simply here as examples, and to provide sane defaults
-
-# Download manager selection 
-# (choose one by uncommenting one #_DOWNLOADER line)
-
-# aria2c:
-#_DOWNLOADER='aria2c -c -j ${_MAXNUM} --input-file=/tmp/apt-fast.list --connect-timeout=600 --timeout=600 -m0'
-
-# aria2c with a proxy (set username, proxy, ip and password!)
-#_DOWNLOADER='aria2c -c 20 -j ${_MAXNUM} --http-proxy=http://username:password@proxy_ip:proxy_port -i apt-fast.list'
-
-# axel:
-#_DOWNLOADER='cat /tmp/apt-fast.list | xargs -l1 axel -n ${_MAXNUM} -a' # axel
-
-###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING!
 ###################################################################
 
-_unlock() {
-	rm -f $LCK_FILE
-}
+# Config File
+source /etc/apt-fast.conf
 
 # Check for proper priveliges
 [ "`whoami`" = root ] || exec sudo "$0" "$@"
 
-# Define our lock location
-LCK_FILE=/var/lock/apt-fast.lck
+# Check if a lockfile exists
+LCK_FILE=/var/run/$(basename $0).lock	
+[ -f $LCK_FILE ] && { echo "$(basename $0) already running"; exit 1; }
 
-lockfile-create -r 0 -q -l "${LCK_FILE}" || {
-	echo "Either you stopped early, or apt-fast is already running."
-	echo "If apt-fast isn't running, delete /var/lock/apt-fast.lck"
-	echo "..and try again."
-	exit 100
+# Remove lockfile
+LCK_RM() {
+m -f $LCK_FILE
+#echo lock-File $LCK_FILE deleted
 }
 
-trap " [ -f ${LCK_FILE} ] && _unlock" 0 1 2 3 13 15
+trap "LCK_RM ; exit 1" 2 9 15
+
+# Create and insert a PID number to lockfile 
+echo $$ > $LCK_FILE
+NUM=1
 
 # Make sure one of the download managers is enabled
-[ -z "$_DOWNLOADER" ] && echo "You must configure apt-fast to use axel or aria2c" && _unlock && exit 1
+[ -z "$_DOWNLOADER" ] && echo "You must configure /etc/apt-fast.conf to use axel or aria2c" && LCK_RM && exit 1
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade|full-upgrade"; then
@@ -87,5 +62,12 @@ else
    ${_APTMGR} $@;
 fi
 
-# Remove our lock
-_unlock
+# Test the date of our lockfile
+while [ $NUM -le 5 ] ; do
+	NUM=`expr $NUM + 1`	
+	sleep 2
+done
+# After error or all done remove our lockfile with a PID number
+LCK_RM
+
+exit 0

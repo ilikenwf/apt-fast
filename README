@@ -1,5 +1,6 @@
 THIS IS THE MODIFIED SCRIPT IF YOU LIKE THE ORIGINAL GOTO https://github.com/ilikenwf/apt-fast
-
+# apt-fast v1.5 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
+# Use this just like aptitude or apt-get for faster package downloading.
 
 ====================
 About:
@@ -20,12 +21,13 @@ who need to manually install it, download it and perform the following:
 
 cp ./apt-fast /usr/sbin/
 chmod +x /usr/sbin/apt-fast
-
 cp ./apt-fast.conf /etc
+chown root /etc/apt-fast.conf
+chown root /usr/sbin/apt-fast
 
 You need to have a good download manager installed - aria2c and axel are favorites
-for this script. Make sure and open apt-fast in a text editor and uncomment the line
-for your download manager before using it, and configure the other options!
+for this script. Make sure and open /etc/apt-fast.conf in a text editor and uncomment the line
+for your download manager before using it, and configure the other options as well.
 
 apt-get install aria2c
 OR
@@ -37,6 +39,7 @@ you find yourself needing to manage packages!
 Debian (and possibly others) autocompletion:
 
 cp ./apt-fast.comp /etc/bash_completion.d/apt-fast
+chown root /etc/bash_completion.d/apt-fast
 . /etc/bash_completion
 
 ====================
@@ -54,5 +57,6 @@ Allan Hoffmeister - aria2c support
 Abhishek Sharma - aria2c with proxy support
 Luca Marchetti - improvements on the locking system and downloader execution
 Richard Klien - Autocompletion, Download Size Checking (made for on ubuntu, untested on other distros)
-Patrick Kramer Ruiz - suggestions - see Suggestions.txt
+Patrick Kramer Ruiz - suggestions
 Sergio Silva - test to see if axel is installed, root detection/sudo autorun, lock file check/creation
+Waldemar {BOB}{Burnfaker} Wetzel - lockfile improvements, separate config file

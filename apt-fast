@@ -18,7 +18,7 @@ LCK_FILE=/var/run/$(basename $0).lock
 
 # Remove lockfile
 LCK_RM() {
-m -f $LCK_FILE
+rm -f $LCK_FILE
 #echo lock-File $LCK_FILE deleted
 }
 

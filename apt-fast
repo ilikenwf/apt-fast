@@ -62,10 +62,10 @@ else
    ${_APTMGR} $@;
 fi
 
-# Test the date of our lockfile
-while [ $NUM -le 5 ] ; do
+# Downtime befor remove the lockfile
+while [ $NUM -le 2 ] ; do
 	NUM=`expr $NUM + 1`	
-	sleep 2
+	sleep 1
 done
 # After error or all done remove our lockfile with a PID number
 LCK_RM

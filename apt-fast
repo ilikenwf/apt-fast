@@ -1,7 +1,7 @@
 #!/bin/bash
-# apt-fast v1.5 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
+# apt-fast v1.6 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
 # Use this just like aptitude or apt-get for faster package downloading.
-
+# Modified by Waldemar {BOB}{Burnfaker} Wetzel
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING!
 ###################################################################
@@ -9,11 +9,17 @@
 # Config File
 source /etc/apt-fast.conf
 
+#Define lockfile / download directory / filelist for download manager / apt cache directory
+LCK_FILE=/var/run/$(basename $0).lock
+DLDIR=/var/cache/apt/archives/apt-fast
+DLLIST=/tmp/apt-fast.list
+APTCACHE=/var/cache/apt/archives
+
+
 # Check for proper priveliges
 [ "`whoami`" = root ] || exec sudo "$0" "$@"
 
 # Check if a lockfile exists
-LCK_FILE=/var/run/$(basename $0).lock	
 [ -f $LCK_FILE ] && { echo "$(basename $0) already running"; exit 1; }
 
 # Remove lockfile
@@ -36,23 +42,34 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade|full-upgrade"; then
   echo "Working...";
 
   # Test if apt-fast directory is present where we put packages
-  if [ ! -d /var/cache/apt/archives/apt-fast ] ; then
-  	mkdir /var/cache/apt/archives/apt-fast;
-  fi
-  cd /var/cache/apt/archives/apt-fast;
+  if [ ! -d $DLDIR ] ; then
+  	mkdir $DLDIR;
+ fi
 
-  # Get the package URL's
+ cd $DLDIR;
+
+ # Get the package URL's
   # note aptitude doesn't have this functionality
   # so we use apt-get only
-  apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > /tmp/apt-fast.list
-  
-  # Download the packages
+  apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
+
+
+# Test /tmp/apt-fast.list file exists AND not zero bytes 
+# download all files from the list
+# if file is empty don't start download manager
+if [ -s "$DLLIST" ]; then
   eval ${_DOWNLOADER}
-  
+fi
+
+
+# check the 
+if [ $(find $DLDIR -mtime -1|wc -l) -gt 1 ];
+    then
   # Move all packages to the apt install directory by force to ensure 
   # already existing debs which may be incomplete are replaced
-  mv -f *.deb /var/cache/apt/archives/
-  
+  mv -f *.deb $APTCACHE;
+fi
+
   # Install our downloaded packages
   ${_APTMGR} $@;
 
@@ -67,7 +84,7 @@ while [ $NUM -le 2 ] ; do
 	NUM=`expr $NUM + 1`	
 	sleep 1
 done
+
 # After error or all done remove our lockfile with a PID number
 LCK_RM
-
-exit 0
+exit 0;

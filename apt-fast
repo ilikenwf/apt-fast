@@ -10,7 +10,7 @@
 source /etc/apt-fast.conf
 
 # Define lockfile
-LCK_FILE=/var/run/$(basename $0).lock
+LCK_FILE="/var/run/$(basename $0).lock"
 
 # Line Color var
 # ex. for use: echo -e "Here is my TEST TEXT  ${cGreen} GREEN TEXT ${endColor}"
@@ -25,32 +25,39 @@ endColor='\e[0m'
 [ "`whoami`" = root ] || exec sudo "$0" "$@"
 
 # Check if a lockfile exists
-[ -f $LCK_FILE ] && { echo -e "$(basename $0) already running! ${cBlue} Please remove $LCK_FILE and try again ${endColor}"; exit 1; }
+if [ -f "$LCK_FILE" ]; then
+  echo -e "$(basename $0) already running! ${cBlue} Please remove $LCK_FILE and try again ${endColor}"
+  exit 1
+fi
 
 # Remove lockfile
 LCK_RM() {
-        rm -f $LCK_FILE
+  rm -f "$LCK_FILE"
 }
 
 trap "LCK_RM ; exit 1" 2 9 15
 
 # Create and insert a PID number to lockfile
-echo $$ > $LCK_FILE
+echo $$ > "$LCK_FILE"
 NUM=1
 
 # Make sure one of the download managers is enabled
-[ -z "$_DOWNLOADER" ] && echo -e "${cGreen} You must configure /etc/apt-fast.conf to use axel or aria2c ${endColor}" && LCK_RM && exit 1
+if [ -z "$_DOWNLOADER" ]; then
+  echo -e "${cGreen} You must configure /etc/apt-fast.conf to use axel or aria2c ${endColor}"
+  LCK_RM
+  exit 1
+fi
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
-if echo "$@" | grep -q "upgrade\|install\|dist-upgrade|full-upgrade"; then
-echo -e "${cGreen} \n Working... this take a while. ${endColor}";
+if echo "$@" | grep -q "upgrade\|install\|dist-upgrade\|full-upgrade"; then
+  echo -e "${cGreen} \n Working... this take a while. ${endColor}"
 
   # Test if apt-fast directory is present where we put packages
-  if [ ! -d $DLDIR ] ; then
-mkdir -p $DLDIR;
- fi
+  if [ ! -d "$DLDIR" ]; then
+    mkdir -p "$DLDIR"
+  fi
 
-cd $DLDIR;
+  cd "$DLDIR"
 
   # Get the package URL's
   # note aptitude doesn't have this functionality
@@ -58,64 +65,66 @@ cd $DLDIR;
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
 
 
-# Test /tmp/apt-fast.list file exists AND not zero bytes
-# download all files from the list
+  # Test /tmp/apt-fast.list file exists AND not zero bytes
+  # download all files from the list
 
 
-cat $DLLIST
+  if [ $(cat "$DLLIST" | wc -l) -gt 0 ]; then
+    cat "$DLLIST"
 
-echo -ne "${cRed} If you want to download and install the files on your System press Y else N to abort. [Y/N]:  ${endColor}"
+    echo -ne "${cRed} If you want to download and install the files on your System press Y else n to abort. [Y/n]:  ${endColor}"
 
-while ((!updsys)); do
-  read -sn1 answer
-  case "$answer" in
-    [JjYy])    result=1; updsys=1 ;;
-    [Nn])      result=0; updsys=1 ;;
-    "")        result=0; updsys=1 ;;
-    *)         updsys=0 ;;
-  esac
-done
-
-echo
-
-if ((result)); then
-if [ -s "$DLLIST" ]; then
-  eval ${_DOWNLOADER}
-  if [ $(find $DLDIR -mtime -1|wc -l) -gt 1 ];
-      then
-        # Move all packages to the apt install directory by force to ensure
-          # already existing debs which may be incomplete are replaced
-            mv -f *.deb $APTCACHE;
-            fi
+    while ((!updsys)); do
+      read -sn1 answer
+      case "$answer" in
+        [JjYy])    result=1; updsys=1 ;;
+        [Nn])      result=0; updsys=1 ;;
+        "")        result=1; updsys=1 ;;
+        *)         updsys=0 ;;
+      esac
+    done
+  else
+    result=1
   fi
 
-    else
-        LCK_RM && exit 1;
-fi
+  echo
 
+  if ((result)); then
+    if [ -s "$DLLIST" ]; then
+      eval "${_DOWNLOADER}"
+      if [ $(find "$DLDIR" -mtime -1 -printf . | wc -c) -gt 1 ]; then
+        # Move all packages to the apt install directory by force to ensure
+        # already existing debs which may be incomplete are replaced
+        mv -f *.deb "$APTCACHE";
+      fi
+    fi
+  else
+    LCK_RM && exit 1
+  fi
 
-# check the
-${_APTMGR} -y $@;
+  # check the
+  "${_APTMGR}" $@
 
-echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor} ${cRed}apt-fast clean${endColor} ${cGreen}as root and try again.\n ${endColor}";
+  echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor} ${cRed}apt-fast clean${endColor} ${cGreen}as root and try again.\n ${endColor}";
 
 else
- #  ${_APTMGR} -y $@ ;
-if [ $(find $DLDIR -mtime -1|wc -l) -gt 1 ];
-    then
-  # Move all packages to the apt install directory by force to ensure
-  # already existing debs which may be incomplete are replaced
-  mv -f *.deb $APTCACHE;
-fi
+  if echo "$@" | grep -q "update"; then
+    "${_APTMGR}" $@
+  fi
+
+  if [ -d "$DLDIR"] && [ $(find "$DLDIR" -mtime -1 -printf . | wc -c) -gt 1 ]; then
+    # Move all packages to the apt install directory by force to ensure
+    # already existing debs which may be incomplete are replaced
+    mv -f *.deb "$APTCACHE"
+  fi
 
 fi
 
 # Downtime befor remove the lockfile
-while [ $NUM -le 2 ] ; do
-NUM=`expr $NUM + 1`
-sleep 1
+while [ $NUM -le 2 ]; do
+  NUM=`expr $NUM + 1`
+  sleep 0.5
 done
 
 # After error or all done remove our lockfile with a PID number
 LCK_RM
-exit 0;

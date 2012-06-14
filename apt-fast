@@ -48,6 +48,18 @@ if [ -z "$_DOWNLOADER" ]; then
   exit 1
 fi
 
+# Make sure an APT manager is enabled and available
+if [ -z "$_APTMGR" ]; then
+  echo -e "${cGreen} You must configure /etc/apt-fast.conf to use either apt-get or aptitude  ${endColor}"
+  LCK_RM
+  exit 1
+elif [ ! $(command -v "$_APTMGR") ]; then
+  echo -e "${cGreen} \`$_APTMGR\` command not available."
+  echo -e " You must configure /etc/apt-fast.conf to use either apt-get or aptitude  ${endColor}"
+  LCK_RM
+  exit 1
+fi
+
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 if echo "$@" | grep -q "upgrade\|install\|dist-upgrade\|full-upgrade"; then
   echo -e "${cGreen} \n Working... this take a while. ${endColor}"
@@ -69,10 +81,10 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade\|full-upgrade"; then
   # download all files from the list
 
 
-  if [ $(cat "$DLLIST" | wc -l) -gt 0 ]; then
+  if [ $(cat "$DLLIST" | wc -l) -gt 0 ] && [ ! "$DOWNLOADBEFORE" ] ; then
     cat "$DLLIST"
 
-    echo -ne "${cRed} If you want to download and install the files on your System press Y else n to abort. [Y/n]:  ${endColor}"
+    echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
 
     while ((!updsys)); do
       read -sn1 answer
@@ -112,7 +124,7 @@ else
     "${_APTMGR}" $@
   fi
 
-  if [ -d "$DLDIR"] && [ $(find "$DLDIR" -mtime -1 -printf . | wc -c) -gt 1 ]; then
+  if [ -d "$DLDIR" ] && [ $(find "$DLDIR" -mtime -1 -printf . | wc -c) -gt 1 ]; then
     # Move all packages to the apt install directory by force to ensure
     # already existing debs which may be incomplete are replaced
     mv -f *.deb "$APTCACHE"

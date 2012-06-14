@@ -61,7 +61,11 @@ elif [ ! $(command -v "$_APTMGR") ]; then
 fi
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
-if echo "$@" | grep -q "upgrade\|install\|dist-upgrade\|full-upgrade"; then
+for option in $@; do  # search for known options
+if [ "$option" == "upgrade" ] ||
+    [ "$option" == "install" ] ||
+    [ "$option" == "dist-upgrade" ] ||
+    [ "$option" == "full-upgrade" ]; then
   echo -e "${cGreen} \n Working... this take a while. ${endColor}"
 
   # Test if apt-fast directory is present where we put packages
@@ -107,30 +111,26 @@ if echo "$@" | grep -q "upgrade\|install\|dist-upgrade\|full-upgrade"; then
       if [ $(find "$DLDIR" -mtime -1 -printf . | wc -c) -gt 1 ]; then
         # Move all packages to the apt install directory by force to ensure
         # already existing debs which may be incomplete are replaced
-        mv -f *.deb "$APTCACHE";
+        find -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
       fi
     fi
   else
-    LCK_RM && exit 1
+    LCK_RM
+    exit 1
   fi
 
-  # check the
   "${_APTMGR}" $@
 
-  echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor} ${cRed}apt-fast clean${endColor} ${cGreen}as root and try again.\n ${endColor}";
+  echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor} ${cRed}apt-fast clean${endColor} ${cGreen}as root and try again.\n ${endColor}"
+  break
+
 
 else
-  if echo "$@" | grep -q "update"; then
-    "${_APTMGR}" $@
-  fi
-
-  if [ -d "$DLDIR" ] && [ $(find "$DLDIR" -mtime -1 -printf . | wc -c) -gt 1 ]; then
-    # Move all packages to the apt install directory by force to ensure
-    # already existing debs which may be incomplete are replaced
-    mv -f *.deb "$APTCACHE"
-  fi
+  "${_APTMGR}" $@
+  break
 
 fi
+done
 
 # Downtime befor remove the lockfile
 while [ $NUM -le 2 ]; do

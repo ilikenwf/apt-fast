@@ -61,8 +61,7 @@ elif [ ! $(command -v "$_APTMGR") ]; then
 fi
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
-i=1
-for option in $@; do  # simple test for unknown options
+for option in $@; do  # search for known options
 if [ "$option" == "upgrade" ] ||
     [ "$option" == "install" ] ||
     [ "$option" == "dist-upgrade" ] ||
@@ -126,23 +125,11 @@ if [ "$option" == "upgrade" ] ||
   break
 
 
-elif [ "$option" == "autoclean" ] ||
-    [ "$option" == "autoremove" ] ||
-    [ "$option" == "check" ] ||
-    [ "$option" == "clean" ] ||
-    [ "$option" == "purge" ] ||
-    [ "$option" == "remove" ] ||
-    [ "$option" == "update" ]; then
+else
   "${_APTMGR}" $@
   break
 
-elif [ $i -ge $# ]; then
-  echo -e "${cRed} Unknown option passed.\n${endColor}"
-  LCK_RM
-  exit 1
-
 fi
-i=$(($i + 1))
 done
 
 # Downtime befor remove the lockfile

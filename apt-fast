@@ -61,6 +61,7 @@ elif [ ! $(command -v "$_APTMGR") ]; then
 fi
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
+cmdfound=
 for option in $@; do  # search for known options
 if [ "$option" == "upgrade" ] ||
     [ "$option" == "install" ] ||
@@ -122,15 +123,16 @@ if [ "$option" == "upgrade" ] ||
   "${_APTMGR}" $@
 
   echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor} ${cRed}apt-fast clean${endColor} ${cGreen}as root and try again.\n ${endColor}"
+  cmdfound=1
   break
-
-
-else
-  "${_APTMGR}" $@
-  break
-
 fi
 done
+
+# Execute package manager directly if unknown options are passed.
+if ((!cmdfound)); then
+  "${_APTMGR}" $@
+fi
+
 
 # Downtime befor remove the lockfile
 while [ $NUM -le 2 ]; do

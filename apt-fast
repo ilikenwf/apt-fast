@@ -1,32 +1,53 @@
 #!/bin/bash
-#set -xv
+[ -n "$DEBUG" ] && set -xv
 # apt-fast v1.6 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
 # Use this just like aptitude or apt-get for faster package downloading.
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING!
 ###################################################################
 
-# Config File
-source /etc/apt-fast.conf
+# Check for proper privileges
+[ "$UID" = 0 ] || exec sudo "$0" "$@"
 
 # Define lockfile
 LCK_FILE="/var/run/$(basename $0).lock"
 
+# Set default package manager, APT cache, temporary download dir,
+# temporary download list file, and maximal parallel downloads
+_APTMGR=apt-get
+eval $(apt-config shell cachedir Dir::Cache)
+eval $(apt-config shell archivesdir Dir::Cache::archives)
+APTCACHE="/${cachedir}${archivesdir}"
+DLDIR="$APTCACHE/apt-fast"
+DLLIST="/tmp/apt-fast.list"
+_MAXNUM=5
+
 # Line Color var
 # ex. for use: echo -e "Here is my TEST TEXT  ${cGreen} GREEN TEXT ${endColor}"
-cGreen='\e[0;32m'
-cRed='\e[0;31m'
-cBlue='\e[0;34m'
-endColor='\e[0m'
+# Only use this when executed in terminal
+if [ -t 1 ]; then
+  cGreen='\e[0;32m'
+  cRed='\e[0;31m'
+  cBlue='\e[0;34m'
+  endColor='\e[0m'
+fi
 
+# Config File
+CONFFILE="/etc/apt-fast.conf"
+source "$CONFFILE"
 
+# Disable colors when not executed in terminal
+if [ ! -t 1 ]; then
+  cGreen=
+  cRed=
+  cBlue=
+  endColor=
+fi
 
-# Check for proper priveliges
-[ "`whoami`" = root ] || exec sudo "$0" "$@"
 
 # Check if a lockfile exists
 if [ -f "$LCK_FILE" ]; then
-  echo -e "$(basename $0) already running! ${cBlue} Please remove $LCK_FILE and try again ${endColor}"
+  echo -e "$(basename $0) already running! ${cBlue} Please remove $LCK_FILE and try again.${endColor}" >&2
   exit 1
 fi
 
@@ -39,23 +60,18 @@ trap "LCK_RM ; exit 1" 2 9 15
 
 # Create and insert a PID number to lockfile
 echo $$ > "$LCK_FILE"
-NUM=1
 
 # Make sure one of the download managers is enabled
 if [ -z "$_DOWNLOADER" ]; then
-  echo -e "${cGreen} You must configure /etc/apt-fast.conf to use axel or aria2c ${endColor}"
+  echo -e "${cGreen} You must configure $CONFFILE to use axel or aria2c.${endColor}" >&2
   LCK_RM
   exit 1
 fi
 
-# Make sure an APT manager is enabled and available
-if [ -z "$_APTMGR" ]; then
-  echo -e "${cGreen} You must configure /etc/apt-fast.conf to use either apt-get or aptitude  ${endColor}"
-  LCK_RM
-  exit 1
-elif [ ! $(command -v "$_APTMGR") ]; then
-  echo -e "${cGreen} \`$_APTMGR\` command not available."
-  echo -e " You must configure /etc/apt-fast.conf to use either apt-get or aptitude  ${endColor}"
+# Make sure package manager is available
+if [ ! $(command -v "$_APTMGR") ]; then
+  echo -e "${cGreen} \`$_APTMGR\` command not available." >&2
+  echo -e " You must configure $CONFFILE to use either apt-get or aptitude.${endColor}" >&2
   LCK_RM
   exit 1
 fi
@@ -66,15 +82,8 @@ for option in $@; do  # search for known options
 if [ "$option" == "upgrade" ] ||
     [ "$option" == "install" ] ||
     [ "$option" == "dist-upgrade" ] ||
-    [ "$option" == "full-upgrade" ]; then
-  echo -e "${cGreen} \n Working... this take a while. ${endColor}"
-
-  # Test if apt-fast directory is present where we put packages
-  if [ ! -d "$DLDIR" ]; then
-    mkdir -p "$DLDIR"
-  fi
-
-  cd "$DLDIR"
+    [ "$option" == "build-dep" ]; then
+  echo -e "${cGreen}\n Working... this take a while.${endColor}"
 
   # Get the package URL's
   # note aptitude doesn't have this functionality
@@ -84,15 +93,13 @@ if [ "$option" == "upgrade" ] ||
 
   # Test /tmp/apt-fast.list file exists AND not zero bytes
   # download all files from the list
-
-
-  if [ $(cat "$DLLIST" | wc -l) -gt 0 ] && [ ! "$DOWNLOADBEFORE" ] ; then
+  if [ $(cat "$DLLIST" | wc -l) -gt 0 ] && [ ! "$DOWNLOADBEFORE" ]; then
     cat "$DLLIST"
 
     echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
 
     while ((!updsys)); do
-      read -sn1 answer
+      read -sn1 -t 20 answer || { echo -e "${cRed}\n Timed out.${endColor}"; LCK_RM; exit 1; }
       case "$answer" in
         [JjYy])    result=1; updsys=1 ;;
         [Nn])      result=0; updsys=1 ;;
@@ -108,37 +115,57 @@ if [ "$option" == "upgrade" ] ||
 
   if ((result)); then
     if [ -s "$DLLIST" ]; then
-      eval "${_DOWNLOADER}"
-      if [ $(find "$DLDIR" -mtime -1 -printf . | wc -c) -gt 1 ]; then
+      # Test if apt-fast directory is present where we put packages
+      if [ ! -d "$DLDIR" ]; then
+        mkdir -p "$DLDIR"
+      fi
+
+      cd "$DLDIR" || { LCK_RM; exit 1; }
+
+      #TODO: Better handling of finished downloads but canceled apt-fast
+      # axel redownloads deb again (with [0-9] suffix).
+      eval "${_DOWNLOADER}" # execute downloadhelper command
+      if [ $(find "$DLDIR" -printf . | wc -c) -gt 1 ]; then
         # Move all packages to the apt install directory by force to ensure
         # already existing debs which may be incomplete are replaced
         find -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
       fi
+      cd -
     fi
   else
     LCK_RM
     exit 1
   fi
 
+  #TODO: quotes get lost: apt-fast install "foo*" -> apt-get install foo*
   "${_APTMGR}" $@
 
-  echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor} ${cRed}apt-fast clean${endColor} ${cGreen}as root and try again.\n ${endColor}"
+  echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor}${cRed}\`apt-fast clean\`${endColor}${cGreen} as root and try again.\n${endColor}"
   cmdfound=1
   break
+
+elif [ "$option" == "clean" ] ||
+  [ "$option" == "autoclean" ]; then
+  #TODO: quotes get lost (see above)
+  "${_APTMGR}" $@ && {
+    find "$DLDIR" -maxdepth 1 -type f -delete
+    [ -f "$DLLIST" ] && rm -f "$DLLIST"
+  }
+  cmdfound=1
+  break
+
 fi
 done
 
 # Execute package manager directly if unknown options are passed.
 if ((!cmdfound)); then
+  #TODO: quotes get lost (see above)
   "${_APTMGR}" $@
 fi
 
 
-# Downtime befor remove the lockfile
-while [ $NUM -le 2 ]; do
-  NUM=`expr $NUM + 1`
-  sleep 0.5
-done
+# Downtime before removal of lockfile
+sleep 0.5
 
 # After error or all done remove our lockfile with a PID number
 LCK_RM

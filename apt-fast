@@ -78,6 +78,7 @@ fi
 
 # If the user entered arguments contain upgrade, install, or dist-upgrade
 cmdfound=
+#TODO: Loop over $@ not very nice.
 for option in $@; do  # search for known options
 if [ "$option" == "upgrade" ] ||
     [ "$option" == "install" ] ||
@@ -90,6 +91,20 @@ if [ "$option" == "upgrade" ] ||
   # so we use apt-get only
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
 
+  # Check if "assume yes" switch is enabled and if yes enable $DOWNLOADBEFORE.
+  #TODO: Get real value over APT items APT::Get::Assume-Yes and
+  #      APT::Get::Assume-No .
+  #FIXME: Composed short options e.g. "-yV" are not recognised - we should use
+  #      getopts for proper option passing. That also would save loop over $@.
+  for option in $@; do
+    if [ "$option" == "-y" ] ||
+        [ "$option" == "--yes" ] ||
+        [ "$option" == "--assume-yes" ]; then
+      DOWNLOADBEFORE=true
+    elif [ "$option" == "--assume-no" ]; then
+      DOWNLOADBEFORE=
+    fi
+  done
 
   # Test /tmp/apt-fast.list file exists AND not zero bytes
   # download all files from the list

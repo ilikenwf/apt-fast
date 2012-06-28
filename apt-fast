@@ -84,7 +84,7 @@ if [ "$option" == "upgrade" ] ||
     [ "$option" == "install" ] ||
     [ "$option" == "dist-upgrade" ] ||
     [ "$option" == "build-dep" ]; then
-  echo -e "${cGreen}\n Working... this take a while.${endColor}"
+  echo -e "${cGreen}\n Working... this may take a while.${endColor}"
 
   # Get the package URL's
   # note aptitude doesn't have this functionality

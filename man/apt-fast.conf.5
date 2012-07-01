@@ -1,0 +1,107 @@
+'\"
+.\" Man page for apt-fast.conf
+.\"
+.\" Copyright: 2012, Dominique Lasserre <lasserre.d@gmail.com>
+.\"
+.\" You may distribute this file under the terms of the GNU General
+.\" Public License as published by the Free Software Foundation; either
+.\" version 3 of the License, or (at your option) any later version.
+.\"
+.TH "APT\-FAST.CONF" "5" "2012-06-01" "apt\-fast 1.6.5" "apt\-fast Manual"
+.SH "NAME"
+.LP
+apt\-fast.conf \- configuration file for \fBapt\-fast\fR(5)
+.SH "SYNOPSIS"
+Configuration file is sourced by \fBbash\fR(1) to load configuration items, so
+use '#' character to start comments. Each configuration item must directly
+followed by '=' character, e.g.: _APTMGR=apt-get
+.br
+It is not recommended to load or execute custom functions.
+.SH "DESCRIPTION"
+.LP
+/etc/apt-fast.conf is the configuration file for \fBapt\-fast\fR(5).
+.TP
+\fB_APTMGR\fR
+Package manager to perform actions with. You may set absolute path to manager.
+.br
+Default: \fIapt\-get\fR
+.TP
+\fBDOWNLOADBEFORE\fR
+Enable item to suppress \fBapt\-fast\fR(5) confirmation dialog and download
+packages directly. 'Enable' means you can set any value to this configuration
+item, e.g.: DOWNLOADBEFORE=true
+.br
+Default: disabled
+.TP
+\fB_MAXNUM\fR
+This item is optional but is used in proposed download helper command
+(configuration item \fB_DOWNLOADER\fR). You can use it as count of maximum
+number of parallel connections to retrieve packages.
+.br
+Default: 5
+.TP
+\fBDLLIST\fR
+Set location of temporary download list file where APT exports URIs of
+downloadable packages.
+.br
+Default: '/tmp/apt-fast.list'
+.TP
+\fB_DOWNLOADER\fR
+Download helper command how to download package URIs stored in \fBDLLIST\fR
+file.
+.br
+aria2: 'aria2c \-c \-j ${_MAXNUM} \-i ${DLLIST} \-\-connect\-timeout=600 \-\-timeout=600 \-m0'
+.br
+axel:  'cat ${DLLIST} | xargs \-l1 axel \-n ${_MAXNUM} \-a'
+.TP
+\fBDLDIR\fR
+Directory where to download packages with download helper to.
+.br
+Default: '/var/cache/apt/archives/apt-fast'
+.TP
+\fBAPTCACHE\fR
+APT package cache directory. Set it to APT configuration items Dir::Cache and
+Dir::Cache::archives, see also \fBapt.conf\fR(5).
+.br
+Default: '/var/cache/apt/archives'
+.TP
+\fBcGreen\fR
+Set specific terminal color. Automatically disabled when \fBapt\-fast\fR(5) is
+not executed in terminal.
+.br
+Default: '\\e[0;32m]'
+.TP
+\fBcRed\fR
+See \fBcGreen\fR item.
+.br
+Default: '\\e[0;31m]'
+.TP
+\fBcBlue\fR
+See \fBcGreen\fR item.
+.br
+Default: '\\e[0;34m]'
+.TP
+\fBendColor\fR
+See \fBcGreen\fR item. This color resets color to default one.
+.br
+Default: '\\e[0m'
+.SH "FILES"
+.TP
+/etc/apt\-fast.conf
+Configuration file.
+.TP
+/tmp/apt-fast.list
+Temporary download list file. Configuration item: \fBDLLIST\fR
+.TP
+/var/cache/apt/archives/apt-file/
+Temporary download location where download accelerator retrieves packages
+before \fBapt\-fast\fR(8) moves them to package cache. Configuration item:
+\fBDLDIR\fR
+.SH "SEE ALSO"
+.LP
+\fBapt-fast\fR(8)
+.br
+\fBapt\-get\fR(8),
+\fBaptitude\fR(8),
+\fBaria2c\fR(1),
+\fBaxel\fR(1)

@@ -169,6 +169,13 @@ elif [ "$option" == "clean" ] ||
   cmdfound=1
   break
 
+elif [ "$option" == "download" ]; then
+  #NOTE: axel does not recognize already downloaded packages.
+  apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
+  eval "${_DOWNLOADER}"
+  cmdfound=1
+  break
+
 fi
 done
 

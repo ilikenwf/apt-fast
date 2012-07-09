@@ -7,7 +7,7 @@
 .\" Public License as published by the Free Software Foundation; either
 .\" version 3 of the License, or (at your option) any later version.
 .\"
-.TH "APT\-FAST" "8" "2012-06-01" "apt\-fast 1.6.7" "apt\-fast Manual"
+.TH "APT\-FAST" "8" "2012-06-01" "apt\-fast 1.7.1" "apt\-fast Manual"
 .SH "NAME"
 .LP
 apt\-fast \- shellscript wrapper for apt\-get or aptitude to speed up downloads
@@ -17,8 +17,10 @@ apt\-fast \- shellscript wrapper for apt\-get or aptitude to speed up downloads
 .br
 \fBapt\-fast\fR [aptitude options and arguments]
 .br
-\fBapt\-fast\fR { { \fIinstall\fP | \fIupgrade\fP | \fIdist-upgrade\fP | \fIbuild-dep\fP | \fIdownload\fP }
-[ \-y | \-\-yes | \-\-assume\-yes | \-\-assume\-no ] <package1> <package2> ... | \fIclean\fP }
+\fBapt\-fast\fR { { \fIinstall\fP | \fIupgrade\fP | \fIdist-upgrade\fP |
+\fIbuild-dep\fP | \fIdownload\fP | \fIsource\fP }
+[ \-y | \-\-yes | \-\-assume\-yes | \-\-assume\-no ] <package1> <package2> ... |
+\fIclean\fP }
 .SH "DESCRIPTION"
 .LP
 \fBapt\-fast\fR is a shellscript wrapper for apt\-get or aptitude that can
@@ -54,8 +56,12 @@ Install build dependencies of one or more packages. The packages should be
 listed after the “build\-dep” command.
 .TP
 \fBdownload\fR <\fIpackage1\fP> <\fIpackage2\fP> ...
-Download packages to current working directory. It depends on download helper
-if already downloaded packages are recognised.
+Download packages to current working directory and extract source archives. It
+depends on download helper if already downloaded packages are recognised.
+.TP
+\fBsource\fR <\fIpackage1\fP> <\fIpackage2\fP> ...
+Download source packages to current working directory. It depends on download
+helper if already downloaded source archives are recognised.
 .TP
 \fBclean\fR
 Clean package cache (configuration item \fBAPTCACHE\fR) and temporary download

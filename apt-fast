@@ -1,26 +1,82 @@
 #!/bin/bash
 [ -n "$DEBUG" ] && set -xv
-# apt-fast v1.6 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
+# apt-fast v1.7 by Matt Parnell http://www.mattparnell.com, GNU GPLv3
 # Use this just like aptitude or apt-get for faster package downloading.
 ###################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING!
 ###################################################################
 
+# Print colored messages.
+# Usage: msg "message text" "message type" "optional: err"
+# Message types are 'normal', 'hint' or 'warning'. Warnings and messages with a
+# third argument are piped to stderr.
+msg(){
+  case "$2" in
+    normal) beginColor="$cGreen";;
+    hint) beginColor="$cBlue";;
+    warning) beginColor="$cRed";;
+  esac
+
+  if [ -z "$3" ] && [ "$2" != "warning" ]; then
+    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}";
+  else
+    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}"; >&2
+  fi
+}
+
+# Search for known options and decide if root privileges are needed.
+root=1  # default value: we need root privileges
+option=
+for arguments in $@; do
+  if [ "$arguments" == "upgrade" ] ||
+      [ "$arguments" == "install" ] ||
+      [ "$arguments" == "dist-upgrade" ] ||
+      [ "$arguments" == "build-dep" ]; then
+    option="install"
+    break
+  elif [ "$arguments" == "clean" ] ||
+      [ "$arguments" == "autoclean" ]; then
+    option="clean"
+    break
+  elif [ "$arguments" == "download" ]; then
+    option="download"
+    root=0
+    break
+  elif [ "$arguments" == "source" ]; then
+    option="source"
+    root=0
+    break
+  fi
+done
+
 # Check for proper privileges
-[ "$UID" = 0 ] || exec sudo "$0" "$@"
+#NOTE: Environment variables are ignored if exec is executed.
+#      E.g. DOWNLOADBEFORE=true apt-fast dist-upgrade
+if ((root)); then
+  [ "$UID" = 0 ] || exec sudo "$0" "$@"
+fi
 
 # Define lockfile
-LCK_FILE="/var/run/$(basename $0).lock"
+# Use /tmp as directory because everybody (not only root) has to have write
+# permissions.
+# We need lock for non-root commands too, because we only have one download
+# list file.
+LCK_FILE="/tmp/apt-fast"
 
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
 _APTMGR=apt-get
+eval $(apt-config shell rootdir Dir)
 eval $(apt-config shell cachedir Dir::Cache)
 eval $(apt-config shell archivesdir Dir::Cache::archives)
-APTCACHE="/${cachedir}${archivesdir}"
+APTCACHE="${rootdir}${cachedir}${archivesdir}"
 DLDIR="$APTCACHE/apt-fast"
 DLLIST="/tmp/apt-fast.list"
 _MAXNUM=5
+
+# Prefix in front of apt-fast output:
+aptfast_prefix=
+
 
 # Line Color var
 # ex. for use: echo -e "Here is my TEST TEXT  ${cGreen} GREEN TEXT ${endColor}"
@@ -42,60 +98,73 @@ if [ ! -t 1 ]; then
   cRed=
   cBlue=
   endColor=
+  [ -z "$aptfast_prefix" ] && aptfast_prefix="[apt-fast $(date +"%T")]"
 fi
 
 
 # Check if a lockfile exists
-if [ -f "$LCK_FILE" ]; then
-  echo -e "$(basename $0) already running! ${cBlue} Please remove $LCK_FILE and try again.${endColor}" >&2
+if [ -f "$LCK_FILE.lock" ]; then
+  msg "apt-fast already running!" "warning"
+  msg "Verify that all apt-fast processes are finished then remove $LCK_FILE.lock and try again." "hint"
   exit 1
 fi
 
-# Remove lockfile
+# Remove lock file
 LCK_RM() {
-  rm -f "$LCK_FILE"
+  # Remove URI file to prevent write permissions issues in /tmp directory.
+  [ -f "$DLLIST" ] && rm -f "$DLLIST"
+  if [ -n "$LOCKPID" ]; then
+    kill "$LOCKPID" && lockfile-remove "$LCK_FILE"
+  fi
 }
 
-trap "LCK_RM ; exit 1" 2 9 15
+# Remove lock file and exit with error 1
+LCK_RM_1() {
+  LCK_RM
+  exit 1
+}
+
+trap "LCK_RM_1" 2 9 15
+
+# Get the package URLs
+get_uris(){
+  #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
+  #      package URIs.
+  apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
+}
 
 # Create and insert a PID number to lockfile
-echo $$ > "$LCK_FILE"
+lockfile-create "$LCK_FILE"
+lockfile-touch "$LCK_FILE" &
+# Declare global variable (to use it in LCK_RM function) and save PID of last
+# job running in background (lockfile-touch process):
+export LOCKPID="$!"
 
 # Make sure one of the download managers is enabled
 if [ -z "$_DOWNLOADER" ]; then
-  echo -e "${cGreen} You must configure $CONFFILE to use axel or aria2c.${endColor}" >&2
-  LCK_RM
-  exit 1
+  msg "You must configure $CONFFILE to use axel or aria2c." "normal" "err"
+  LCK_RM_1
 fi
 
 # Make sure package manager is available
 if [ ! $(command -v "$_APTMGR") ]; then
-  echo -e "${cGreen} \`$_APTMGR\` command not available." >&2
-  echo -e " You must configure $CONFFILE to use either apt-get or aptitude.${endColor}" >&2
-  LCK_RM
-  exit 1
+  msg "\`$_APTMGR\` command not available." "warning"
+  msg "You must configure $CONFFILE to use either apt-get or aptitude." "normal" "err"
+  LCK_RM_1
 fi
 
-# If the user entered arguments contain upgrade, install, or dist-upgrade
-cmdfound=
-#TODO: Loop over $@ not very nice.
-for option in $@; do  # search for known options
-if [ "$option" == "upgrade" ] ||
-    [ "$option" == "install" ] ||
-    [ "$option" == "dist-upgrade" ] ||
-    [ "$option" == "build-dep" ]; then
-  echo -e "${cGreen}\n Working... this may take a while.${endColor}"
 
-  # Get the package URL's
-  # note aptitude doesn't have this functionality
-  # so we use apt-get only
-  apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
+# Run actions.
+if [ $option == "install" ]; then
+  msg "\n Working... this may take a while." "normal"
+
+  get_uris $@
 
   # Check if "assume yes" switch is enabled and if yes enable $DOWNLOADBEFORE.
   #TODO: Get real value over APT items APT::Get::Assume-Yes and
   #      APT::Get::Assume-No .
   #FIXME: Composed short options e.g. "-yV" are not recognised - we should use
-  #      getopts for proper option passing. That also would save loop over $@.
+  #      getopts for proper option passing.
   for option in $@; do
     if [ "$option" == "-y" ] ||
         [ "$option" == "--yes" ] ||
@@ -114,7 +183,7 @@ if [ "$option" == "upgrade" ] ||
     echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
 
     while ((!updsys)); do
-      read -sn1 -t 20 answer || { echo -e "${cRed}\n Timed out.${endColor}"; LCK_RM; exit 1; }
+      read -sn1 -t 20 answer || { msg "\n Timed out." "warning"; LCK_RM_1; }
       case "$answer" in
         [JjYy])    result=1; updsys=1 ;;
         [Nn])      result=0; updsys=1 ;;
@@ -135,9 +204,9 @@ if [ "$option" == "upgrade" ] ||
         mkdir -p "$DLDIR"
       fi
 
-      cd "$DLDIR" || { LCK_RM; exit 1; }
+      cd "$DLDIR" &>/dev/null || LCK_RM_1
 
-      #TODO: Better handling of finished downloads but canceled apt-fast
+      #FIXME: Better handling of finished downloads but canceled apt-fast
       # axel redownloads deb again (with [0-9] suffix).
       eval "${_DOWNLOADER}" # execute downloadhelper command
       if [ $(find "$DLDIR" -printf . | wc -c) -gt 1 ]; then
@@ -145,49 +214,56 @@ if [ "$option" == "upgrade" ] ||
         # already existing debs which may be incomplete are replaced
         find -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
       fi
-      cd -
+      cd - &>/dev/null
     fi
   else
-    LCK_RM
-    exit 1
+    LCK_RM_1
   fi
 
-  #TODO: quotes get lost: apt-fast install "foo*" -> apt-get install foo*
+  #FIXME: quotes get lost: apt-fast install "foo*" -> apt-get install foo*
   "${_APTMGR}" $@
 
-  echo -e "${cGreen} \nDone! Verify that all packages were installed successfully. If errors are found, run ${endColor}${cRed}\`apt-fast clean\`${endColor}${cGreen} as root and try again.\n${endColor}"
-  cmdfound=1
-  break
+  msg "\n Done! Verify that all packages were installed successfully." "normal"
+  msg "If errors are found, run ${endColor}${cRed}\`apt-fast clean\`${endColor}${cGreen} as root and try again.\n" "normal"
 
-elif [ "$option" == "clean" ] ||
-  [ "$option" == "autoclean" ]; then
-  #TODO: quotes get lost (see above)
+elif [ "$option" == "clean" ]; then
+  #FIXME: quotes get lost (see above)
   "${_APTMGR}" $@ && {
     find "$DLDIR" -maxdepth 1 -type f -delete
-    [ -f "$DLLIST" ] && rm -f "$DLLIST"
+    [ -f "$DLLIST" ] && rm -f -- "$DLLIST"*
   }
-  cmdfound=1
-  break
 
 elif [ "$option" == "download" ]; then
   #NOTE: axel does not recognize already downloaded packages.
-  apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
+  get_uris $@
   eval "${_DOWNLOADER}"
-  cmdfound=1
-  break
 
-fi
-done
+elif [ "$option" == "source" ]; then
+  msg "\n Working... this may take a while.\n" "normal"
+  get_uris $@
+  eval "${_DOWNLOADER}"
+  # We use APT manager here to provide more verbose output. This method is
+  # slightly slower then extractiong packages manually after download but also
+  # more hardened (e.g. some options like --compile are available).
+  "${_APTMGR}" $@
+  # Uncomment following snippet to extract source directly and comment line
+  # before.
+  #while read srcfile; do
+  #  # extract only .dsc files
+  #  echo "$srcfile" | grep -q '\.dsc$' || continue
+  #  dpkg-source -x "$(basename "$srcfile")"
+  #done < "$DLLIST"
 
 # Execute package manager directly if unknown options are passed.
-if ((!cmdfound)); then
-  #TODO: quotes get lost (see above)
+else
+  #FIXME: quotes get lost (see above)
   "${_APTMGR}" $@
+
 fi
 
 
 # Downtime before removal of lockfile
 sleep 0.5
 
-# After error or all done remove our lockfile with a PID number
+# After error or all done remove our lockfile
 LCK_RM

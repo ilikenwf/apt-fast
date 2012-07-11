@@ -47,10 +47,10 @@ chown root /etc/bash_completion.d/apt-fast
 
 Man page installation:
 ===================
-cp ./man/apt-fast.5 /usr/share/man/man5
-gzip -f9 /usr/share/man/man5/apt-fast.5
-cp ./man/apt-fast.conf.8 /usr/share/man/man8
-gzip -f9 /usr/share/man/man8/apt-fast.conf.8
+cp ./man/apt-fast.8 /usr/share/man/man8
+gzip -f9 /usr/share/man/man8/apt-fast.8
+cp ./man/apt-fast.conf.5 /usr/share/man/man5
+gzip -f9 /usr/share/man/man5/apt-fast.conf.5
 
 ====================
 License:

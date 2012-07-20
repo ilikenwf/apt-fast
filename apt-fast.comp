@@ -1,4 +1,6 @@
 # Debian apt-fast(8) completion.
+# Copy of Ubuntu 10.04 _apt_get function from apt completion. Merged with 12.04
+# changes but preserve compatibility. _apt_get function renamed to _apt_fast.
 
 have apt-fast &&
 _apt_fast()
@@ -10,7 +12,7 @@ _apt_fast()
     prev=${COMP_WORDS[COMP_CWORD-1]}
 
     for (( i=0; i < ${#COMP_WORDS[@]}-1; i++ )); do
-        if [[ ${COMP_WORDS[i]} == @(install|remove|autoremove|purge|source|build-dep) ]]; then
+        if [[ ${COMP_WORDS[i]} == @(install|remove|autoremove|purge|source|build-dep|changelog|download) ]]; then
             special=${COMP_WORDS[i]}
         fi
     done
@@ -25,6 +27,12 @@ _apt_fast()
                     # assume RPM based
                     _rpm_installed_packages
                 fi
+                return 0
+                ;;
+            source)
+                COMPREPLY=( $( apt-cache --no-generate pkgnames "$cur" \
+                    2> /dev/null ) $( apt-cache dumpavail | \
+                    command grep "^Source: $cur" | sort -u | cut -f2 -d" " ) )
                 return 0
                 ;;
             *)
@@ -42,7 +50,7 @@ _apt_fast()
              ;;
         -@(t|-target-release|-default-release))
              COMPREPLY=( $( apt-cache policy | \
-                 grep "release.o=Debian,a=$cur" | \
+                 command grep "release.o=Debian,a=$cur" | \
                  sed -e "s/.*a=\(\w*\).*/\1/" | uniq 2> /dev/null) )
              return 0
              ;;
@@ -61,7 +69,7 @@ _apt_fast()
     else
         COMPREPLY=( $( compgen -W 'update upgrade dselect-upgrade \
             dist-upgrade install remove purge source build-dep \
-            check clean autoclean autoremove' -- "$cur" ) )
+            check download clean autoclean autoremove changelog' -- "$cur" ) )
     fi
 
     return 0

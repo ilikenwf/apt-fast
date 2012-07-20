@@ -46,6 +46,9 @@ for arguments in $@; do
     option="source"
     root=0
     break
+  elif [ "$arguments" == "changelog" ]; then
+    root=0
+    break
   fi
 done
 
@@ -155,7 +158,7 @@ fi
 
 
 # Run actions.
-if [ $option == "install" ]; then
+if [ "$option" == "install" ]; then
   msg "\n Working... this may take a while." "normal"
 
   get_uris $@

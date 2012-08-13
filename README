@@ -1,5 +1,12 @@
-# apt-fast v1.7 by Matt Parnell http://www.mattparnell.com, GNU GPLv3+
+# apt-fast v1.7
 # Use this just like aptitude or apt-get for faster package downloading.
+#
+# Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
+# Improvements, maintenance, revisions - 2012 Dominique Lasserre
+#
+# You may distribute this file under the terms of the GNU General
+# Public License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
 
 ====================
 About:

@@ -52,76 +52,94 @@ for arguments in $@; do
   fi
 done
 
-# Check for proper privileges
-#NOTE: Environment variables are ignored if exec is executed.
-#      E.g. DOWNLOADBEFORE=true apt-fast dist-upgrade
+# Check for proper privileges.
+# Call explicitly with environment variables to get them into root conext.
+#FIXME: Variables passed by command line should overwrite
+#       config file variables.
 if ((root)); then
-  [ "$UID" = 0 ] || exec sudo "$0" "$@"
+  [ "$UID" = 0 ] || exec sudo LCK_FILE="$LCK_FILE" \
+                              DOWNLOADBEFORE="$DOWNLOADBEFORE" \
+                              _APTMGR="$_APTMGR" \
+                              APTCACHE="$APTCACHE" \
+                              DLDIR="$DLDIR" \
+                              DLLIST="$DLLIST" \
+                              LISTDIR="$LISTDIR" \
+                              _MAXIMUM="$MAXIMUM" \
+                              aptfast_prefix="$aptfast_prefix" \
+                              LEGACY="$LEGACY" "$0" "$@"
 fi
 
-# Define lockfile
+# Set variable only if not already set.
+#NOTE: Disadvantage of this function is: Quoted variables are not longer
+#      quoted when passed to function (see color variables). Therefore we
+#      quote values explicitly.
+setvar(){
+  [ "$(eval echo \$${1%%=*})" ] || eval "${1%%=*}=\"${1#*=}\""
+}
+
+# Define lockfile.
 # Use /tmp as directory because everybody (not only root) has to have write
 # permissions.
 # We need lock for non-root commands too, because we only have one download
 # list file.
-LCK_FILE="/tmp/apt-fast"
+setvar LCK_FILE="/tmp/apt-fast"
 
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
-_APTMGR=apt-get
+setvar _APTMGR=apt-get
 eval $(apt-config shell rootdir Dir)
 eval $(apt-config shell cachedir Dir::Cache)
 eval $(apt-config shell archivesdir Dir::Cache::archives)
-APTCACHE="${rootdir}${cachedir}${archivesdir}"
-DLDIR="$APTCACHE/apt-fast"
-DLLIST="/tmp/apt-fast.list"
-_MAXNUM=5
+eval $(apt-config shell statedir Dir::State)
+eval $(apt-config shell listsdir Dir::State::lists)
+setvar APTCACHE="${rootdir}${cachedir}${archivesdir}"
+setvar DLDIR="$APTCACHE/apt-fast"
+setvar DLLIST="/tmp/apt-fast.list"
+setvar LISTDIR="${rootdir}${statedir}${listsdir}"
+setvar _MAXNUM=5
 
 # Prefix in front of apt-fast output:
-aptfast_prefix=
+setvar aptfast_prefix=
 
 
-# Line Color var
-# ex. for use: echo -e "Here is my TEST TEXT  ${cGreen} GREEN TEXT ${endColor}"
-# Only use this when executed in terminal
-if [ -t 1 ]; then
-  cGreen='\e[0;32m'
-  cRed='\e[0;31m'
-  cBlue='\e[0;34m'
-  endColor='\e[0m'
-fi
+# Set color variables.
+setvar cGreen='\e[0;32m'
+setvar cRed='\e[0;31m'
+setvar cBlue='\e[0;34m'
+setvar endColor='\e[0m'
 
-# Config File
-CONFFILE="/etc/apt-fast.conf"
+# Load config file.
+setvar CONFFILE="/etc/apt-fast.conf"
 source "$CONFFILE"
 
-# Disable colors when not executed in terminal
+# Disable colors if not executed in terminal.
 if [ ! -t 1 ]; then
   cGreen=
   cRed=
   cBlue=
   endColor=
+  #FIXME: Time not updated.
   [ -z "$aptfast_prefix" ] && aptfast_prefix="[apt-fast $(date +"%T")]"
 fi
 
 
-# Check if a lockfile exists
+# Check if a lock file exists.
 if [ -f "$LCK_FILE.lock" ]; then
   msg "apt-fast already running!" "warning"
   msg "Verify that all apt-fast processes are finished then remove $LCK_FILE.lock and try again." "hint"
   exit 1
 fi
 
-# Remove lock file
+# Remove lock file.
 LCK_RM() {
   # Remove URI file to prevent write permissions issues in /tmp directory.
-  [ -f "$DLLIST" ] && rm -f "$DLLIST"
+  #[ -f "$DLLIST" ] && rm -f "$DLLIST"
   if [ -n "$LOCKPID" ]; then
     kill "$LOCKPID" && lockfile-remove "$LCK_FILE"
   fi
 }
 
-# Remove lock file and exit with error 1
+# Remove lock file and exit with code 1.
 LCK_RM_1() {
   LCK_RM
   exit 1
@@ -129,14 +147,14 @@ LCK_RM_1() {
 
 trap "LCK_RM_1" 2 9 15
 
-# Get the package URLs
+# Get the package URLs.
 get_uris(){
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
   #      package URIs.
   apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
 }
 
-# Create and insert a PID number to lockfile
+# Create and insert a PID number to lockfile.
 lockfile-create "$LCK_FILE"
 lockfile-touch "$LCK_FILE" &
 # Declare global variable (to use it in LCK_RM function) and save PID of last
@@ -149,7 +167,7 @@ if [ -z "$_DOWNLOADER" ]; then
   LCK_RM_1
 fi
 
-# Make sure package manager is available
+# Make sure package manager is available.
 if [ ! $(command -v "$_APTMGR") ]; then
   msg "\`$_APTMGR\` command not available." "warning"
   msg "You must configure $CONFFILE to use either apt-get or aptitude." "normal" "err"
@@ -178,8 +196,8 @@ if [ "$option" == "install" ]; then
     fi
   done
 
-  # Test /tmp/apt-fast.list file exists AND not zero bytes
-  # download all files from the list
+  # Test /tmp/apt-fast.list file exists AND not zero bytes.
+  # Then download all files from the list.
   if [ $(cat "$DLLIST" | wc -l) -gt 0 ] && [ ! "$DOWNLOADBEFORE" ]; then
     cat "$DLLIST"
 
@@ -200,17 +218,18 @@ if [ "$option" == "install" ]; then
 
   echo
 
+  # Continue if answer was right or DOWNLOADBEFORE is enabled.
   if ((result)); then
     if [ -s "$DLLIST" ]; then
-      # Test if apt-fast directory is present where we put packages
+      # Test if apt-fast directory is present where we put packages.
       if [ ! -d "$DLDIR" ]; then
-        mkdir -p "$DLDIR"
+        mkdir -p -- "$DLDIR"
       fi
 
       cd "$DLDIR" &>/dev/null || LCK_RM_1
 
       #FIXME: Better handling of finished downloads but canceled apt-fast
-      # axel redownloads deb again (with [0-9] suffix).
+      #       axel redownloads deb again (with [0-9] suffix).
       eval "${_DOWNLOADER}" # execute downloadhelper command
       if [ $(find "$DLDIR" -printf . | wc -c) -gt 1 ]; then
         # Move all packages to the apt install directory by force to ensure
@@ -224,10 +243,9 @@ if [ "$option" == "install" ]; then
   fi
 
   #FIXME: quotes get lost: apt-fast install "foo*" -> apt-get install foo*
-  "${_APTMGR}" $@
+  "${_APTMGR}" $@ &
+  APTPID=$!
 
-  msg "\n Done! Verify that all packages were installed successfully." "normal"
-  msg "If errors are found, run ${endColor}${cRed}\`apt-fast clean\`${endColor}${cGreen} as root and try again.\n" "normal"
 
 elif [ "$option" == "clean" ]; then
   #FIXME: quotes get lost (see above)
@@ -248,9 +266,10 @@ elif [ "$option" == "source" ]; then
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also
   # more hardened (e.g. some options like --compile are available).
-  "${_APTMGR}" $@
-  # Uncomment following snippet to extract source directly and comment line
-  # before.
+  "${_APTMGR}" $@ &
+  APTPID=$!
+  # Uncomment following snippet to extract source directly and comment
+  # both lines before.
   #while read srcfile; do
   #  # extract only .dsc files
   #  echo "$srcfile" | grep -q '\.dsc$' || continue
@@ -260,13 +279,14 @@ elif [ "$option" == "source" ]; then
 # Execute package manager directly if unknown options are passed.
 else
   #FIXME: quotes get lost (see above)
-  "${_APTMGR}" $@
+  "${_APTMGR}" $@ &
+  APTPID=$!
 
 fi
 
 
-# Downtime before removal of lockfile
-sleep 0.5
+# Wait for APT processes to finish.
+[ -n "$APTPID" ] && wait $APTPID
 
 # After error or all done remove our lockfile
 LCK_RM

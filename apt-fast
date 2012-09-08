@@ -249,8 +249,7 @@ if [ "$option" == "install" ]; then
   fi
 
   #FIXME: quotes get lost: apt-fast install "foo*" -> apt-get install foo*
-  "${_APTMGR}" $@ &
-  APTPID=$!
+  "${_APTMGR}" $@
 
 
 elif [ "$option" == "clean" ]; then
@@ -272,8 +271,7 @@ elif [ "$option" == "source" ]; then
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also
   # more hardened (e.g. some options like --compile are available).
-  "${_APTMGR}" $@ &
-  APTPID=$!
+  "${_APTMGR}" $@
   # Uncomment following snippet to extract source directly and comment
   # both lines before.
   #while read srcfile; do
@@ -285,14 +283,10 @@ elif [ "$option" == "source" ]; then
 # Execute package manager directly if unknown options are passed.
 else
   #FIXME: quotes get lost (see above)
-  "${_APTMGR}" $@ &
-  APTPID=$!
+  "${_APTMGR}" $@
 
 fi
 
-
-# Wait for APT processes to finish.
-[ -n "$APTPID" ] && wait $APTPID
 
 # After error or all done remove our lockfile
 LCK_RM

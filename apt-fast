@@ -72,7 +72,7 @@ if ((root)); then
                               LISTDIR="$LISTDIR" \
                               _MAXIMUM="$MAXIMUM" \
                               aptfast_prefix="$aptfast_prefix" \
-                              LEGACY="$LEGACY" "$0" "$@"
+                              APT_FAST_TIMEOUT="$APT_FAST_TIMEOUT" "$0" "$@"
 fi
 
 # Set variable only if not already set.
@@ -113,6 +113,11 @@ setvar cGreen='\e[0;32m'
 setvar cRed='\e[0;31m'
 setvar cBlue='\e[0;34m'
 setvar endColor='\e[0m'
+
+# Set timout value for apt-fast download confirmation dialog.
+# Value is in seconds.
+setvar APT_FAST_TIMEOUT=60
+
 
 # Load config file.
 setvar CONFFILE="/etc/apt-fast.conf"
@@ -210,7 +215,7 @@ if [ "$option" == "install" ]; then
     echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
 
     while ((!updsys)); do
-      read -sn1 -t 20 answer || { msg "\n Timed out." "warning"; LCK_RM_1; }
+      read -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg "\n Timed out." "warning"; LCK_RM_1; }
       case "$answer" in
         [JjYy])    result=1; updsys=1 ;;
         [Nn])      result=0; updsys=1 ;;

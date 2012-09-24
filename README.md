@@ -12,23 +12,25 @@ version 3 of the License, or (at your option) any later version.
 
 apt-fast 1.7
 ============
-
-About:
-------
 apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically
 improve apt download times by downloading packages in parallel, with multiple
 connections per package.
 
 
-Setup/Install:
---------------
-You can use PPA to get automatical configuration file setup, for details see:
+Setup/Install
+-------------
+### PPA ###
+You can use the PPA to get a graphical configuration file setup and automatic
+updates, for details see:
 [ppa:apt-fast/stable](https://code.launchpad.net/~apt-fast/+archive/stable).
 
 Some distros, such as PCLinuxOS include apt-fast in their repos.
 
+
+### Manual ###
 For those of you who want to manually install it, download it and perform the
 following:
+
     cp apt-fast /usr/bin/
     chmod +x /usr/bin/apt-fast
     cp apt-fast.conf /etc
@@ -41,40 +43,39 @@ configure the other options as well.
 
     apt-get install aria2
 *OR*
+
     apt-get install axel
 
 Then, you should be ready to use it - simply run apt-fast instead of apt-get
 or aptitude any time you find yourself needing to manage packages!
 
 
-Autocompletion
---------------
-### Bash ###
+### Autocompletion ###
+#### Bash ####
     cp completion/bash/apt-fast /etc/bash_completion.d/
     chown root:root /etc/bash_completion.d/apt-fast
     . /etc/bash_completion
 
-### Zsh ###
+#### Zsh ####
     cp completion/zsh/_apt-fast /usr/share/zsh/functions/Completion/Debian/
     chown root:root /usr/share/zsh/functions/Completion/Debian/_apt-fast
     rehash
 
 
-Manual page installation:
--------------------------
+### Manual page installation ###
     cp ./man/apt-fast.8 /usr/share/man/man8
     gzip -f9 /usr/share/man/man8/apt-fast.8
     cp ./man/apt-fast.conf.5 /usr/share/man/man5
     gzip -f9 /usr/share/man/man5/apt-fast.conf.5
 
 
-License:
---------
+License
+-------
 Consider apt-fast and all of it's derivatives licensed under the GNU GPLv3+.
 
 
-Special thanks:
----------------
+Special thanks
+--------------
  * Travis/travisn000 - support for complex apt-get commands
  * Allan Hoffmeister - aria2c support
  * Abhishek Sharma - aria2c with proxy support

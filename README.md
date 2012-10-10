@@ -59,7 +59,7 @@ or aptitude any time you find yourself needing to manage packages!
 #### Zsh ####
     cp completion/zsh/_apt-fast /usr/share/zsh/functions/Completion/Debian/
     chown root:root /usr/share/zsh/functions/Completion/Debian/_apt-fast
-    rehash
+    source /usr/share/zsh/functions/Completion/Debian/_apt-fast
 
 
 ### Manual page installation ###
@@ -72,6 +72,9 @@ or aptitude any time you find yourself needing to manage packages!
 License
 -------
 Consider apt-fast and all of it's derivatives licensed under the GNU GPLv3+.
+
+Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
+Improvements, maintenance, revisions - 2012 Dominique Lasserre
 
 
 Special thanks

@@ -58,70 +58,92 @@ for arguments in $@; do
   fi
 done
 
+# To handle priority of options correctly (environment over config file vars)
+# we need to preserve all interesting env variables. As this wouldn't be
+# difficult enough we have to preserve complete env vars (especially if value
+# ist set (even empty) or not) when changing context (sudo)...
+# Set a 'random' string to all unset variables.
+TMP_RANDOM="13979853562951413"
+TMP_LCK_FILE="${LCK_FILE-${TMP_RANDOM}}"
+TMP_DOWNLOADBEFORE="${DOWNLOADBEFORE-${TMP_RANDOM}}"
+TMP__APTMGR="${_APTMGR-${TMP_RANDOM}}"
+TMP_APTCACHE="${APTCACHE-${TMP_RANDOM}}"
+TMP_DLDIR="${DLDIR-${TMP_RANDOM}}"
+TMP_DLLIST="${DLLIST-${TMP_RANDOM}}"
+TMP_LISTDIR="${LISTDIR-${TMP_RANDOM}}"
+TMP__MAXMUM="${MAXMUM-${TMP_RANDOM}}"
+TMP_aptfast_prefix="${aptfast_prefix-${TMP_RANDOM}}"
+TMP_APT_FAST_TIMEOUT="${APT_FAST_TIMEOUT-${TMP_RANDOM}}"
+
 # Check for proper privileges.
 # Call explicitly with environment variables to get them into root conext.
-#FIXME: Variables passed by command line should overwrite
-#       config file variables.
-if ((root)); then
-  [ "$UID" = 0 ] || exec sudo LCK_FILE="$LCK_FILE" \
-                              DOWNLOADBEFORE="$DOWNLOADBEFORE" \
-                              _APTMGR="$_APTMGR" \
-                              APTCACHE="$APTCACHE" \
-                              DLDIR="$DLDIR" \
-                              DLLIST="$DLLIST" \
-                              LISTDIR="$LISTDIR" \
-                              _MAXIMUM="$MAXIMUM" \
-                              aptfast_prefix="$aptfast_prefix" \
-                              APT_FAST_TIMEOUT="$APT_FAST_TIMEOUT" "$0" "$@"
+if [ "$root" = 1 -a "$UID" != 0 ]; then
+  exec sudo DEBUG="$DEBUG" \
+            LCK_FILE="$TMP_LCK_FILE" \
+            DOWNLOADBEFORE="$TMP_DOWNLOADBEFORE" \
+            _APTMGR="$TMP__APTMGR" \
+            APTCACHE="$TMP_APTCACHE" \
+            DLDIR="$TMP_DLDIR" \
+            DLLIST="$TMP_DLLIST" \
+            LISTDIR="$TMP_LISTDIR" \
+            _MAXMUM="$TMP_MAXMUM" \
+            aptfast_prefix="$TMP_aptfast_prefix" \
+            APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT" "$0" "$@"
 fi
 
-# Set variable only if not already set.
-#NOTE: Disadvantage of this function is: Quoted variables are not longer
-#      quoted when passed to function (see color variables). Therefore we
-#      quote values explicitly.
-setvar(){
-  [ "$(eval echo \$${1%%=*})" ] || eval "${1%%=*}=\"${1#*=}\""
-}
 
 # Define lockfile.
 # Use /tmp as directory because everybody (not only root) has to have write
 # permissions.
 # We need lock for non-root commands too, because we only have one download
 # list file.
-setvar LCK_FILE="/tmp/apt-fast"
+LCK_FILE="/tmp/apt-fast"
 
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
-setvar _APTMGR=apt-get
+_APTMGR=apt-get
 eval $(apt-config shell rootdir Dir)
 eval $(apt-config shell cachedir Dir::Cache)
 eval $(apt-config shell archivesdir Dir::Cache::archives)
 eval $(apt-config shell statedir Dir::State)
 eval $(apt-config shell listsdir Dir::State::lists)
-setvar APTCACHE="${rootdir}${cachedir}${archivesdir}"
-setvar DLDIR="$APTCACHE/apt-fast"
-setvar DLLIST="/tmp/apt-fast.list"
-setvar LISTDIR="${rootdir}${statedir}${listsdir}"
-setvar _MAXNUM=5
+APTCACHE="${rootdir}${cachedir}${archivesdir}"
+DLDIR="$APTCACHE/apt-fast"
+DLLIST="/tmp/apt-fast.list"
+LISTDIR="${rootdir}${statedir}${listsdir}"
+_MAXINUM=5
 
 # Prefix in front of apt-fast output:
-setvar aptfast_prefix=
-
+aptfast_prefix=
 
 # Set color variables.
-setvar cGreen='\e[0;32m'
-setvar cRed='\e[0;31m'
-setvar cBlue='\e[0;34m'
-setvar endColor='\e[0m'
+cGreen='\e[0;32m'
+cRed='\e[0;31m'
+cBlue='\e[0;34m'
+endColor='\e[0m'
 
 # Set timout value for apt-fast download confirmation dialog.
 # Value is in seconds.
-setvar APT_FAST_TIMEOUT=60
+APT_FAST_TIMEOUT=60
 
 
 # Load config file.
-setvar CONFFILE="/etc/apt-fast.conf"
+CONFFILE="/etc/apt-fast.conf"
 source "$CONFFILE"
+
+# Now overwrite with preserved values if values were set before (compare with
+# 'random' string).
+[ "$TMP_LCK_FILE" = "$TMP_RANDOM" ] || LCK_FILE="$TMP_LCK_FILE"
+[ "$TMP_DOWNLOADBEFORE" = "$TMP_RANDOM" ] || DOWNLOADBEFORE="$TMP_DOWNLOADBEFORE"
+[ "$TMP__APTMGR" = "$TMP_RANDOM" ] || _APTMGR="$TMP__APTMGR"
+[ "$TMP_APTCACHE" = "$TMP_RANDOM" ] || APTCACHE="$TMP_APTCACHE"
+[ "$TMP_DLDIR" = "$TMP_RANDOM" ] || DLDIR="$TMP_DLDIR"
+[ "$TMP_DLLIST" = "$TMP_RANDOM" ] || DLLIST="$TMP_DLLIST"
+[ "$TMP_LISTDIR" = "$TMP_RANDOM" ] || LISTDIR="$TMP_LISTDIR"
+[ "$TMP__MAXMUM" = "$TMP_RANDOM" ] || _MAXMUM="$TMP__MAXMUM"
+[ "$TMP_aptfast_prefix" = "$TMP_RANDOM" ] || aptfast_prefix="$TMP_aptfast_prefix"
+[ "$TMP_APT_FAST_TIMEOUT" = "$TMP_RANDOM" ] || APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT"
+
 
 # Disable colors if not executed in terminal.
 if [ ! -t 1 ]; then

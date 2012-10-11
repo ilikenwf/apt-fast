@@ -52,7 +52,7 @@ Look at your distribution's archive mirror list and select some mirrors.
  * Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
 Then add them to whitespace and comma separated list in config file, e.g.:
     MIRRORS=( 'http://ftp.debian.org/debian,http://ftp2.de.debian.org/debian,http://ftp.de.debian.org/debian,ftp://ftp.uni-kl.de/debian'
-              'http://archive.ubuntu.com/ubuntu,http://de.archive.ubuntu.com/ubuntu,http://ftp.halifax.rwth-aachen.de/ubuntu,http://ftp.uni-kl.de/pub/linux/ubuntu,http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )                                                                                                                                                                        I
+              'http://archive.ubuntu.com/ubuntu,http://de.archive.ubuntu.com/ubuntu,http://ftp.halifax.rwth-aachen.de/ubuntu,http://ftp.uni-kl.de/pub/linux/ubuntu,http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
 
 *NOTE:* Write also your mirrors listed in your sources.list into that list to
 make sure associated mirrors are handled properly. Remember: Commas separate

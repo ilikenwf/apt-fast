@@ -230,8 +230,9 @@ lockfile-touch "$LCK_FILE" &
 export LOCKPID="$!"
 
 # Make sure aria2c (in general first parameter from _DOWNLOADER) is available.
-if [ ! $(command -v "${_DOWNLOADER[0]}") ]; then
-  msg "Command not found: ${_DOWNLOADER[0]}" "normal" "err"
+CMD="$(echo "$_DOWNLOADER" | sed 's/^\s*\([^ ]\+\).*$/\1/')"
+if [ ! $(command -v "$CMD") ]; then
+  msg "Command not found: $CMD" "normal" "err"
   msg "You must configure $CONFFILE to use aria2c or another supported download manager" "normal" "err"
   LCK_RM_1
 fi

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# apt-fast v1.7
+# apt-fast v1.8
 # Use this just like aptitude or apt-get for faster package downloading.
 #
 # Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
@@ -126,6 +126,8 @@ endColor='\e[0m'
 # Value is in seconds.
 APT_FAST_TIMEOUT=60
 
+# Download command.
+_DOWNLOADER='aria2c -c -j ${_MAXNUM} -i ${DLLIST} --connect-timeout=600 --timeout=600 -m0'
 
 # Load config file.
 CONFFILE="/etc/apt-fast.conf"
@@ -180,11 +182,44 @@ LCK_RM_1() {
 
 trap "LCK_RM_1" 2 9 15
 
+# Check if mirrors are available. And if so add all mirrors to download list.
+get_mirrors(){
+  # Check all mirror lists.
+  for mirrorstr in ${MIRRORS[@]}; do
+    # Build mirrors array from comma separated string.
+    mirrors=( $(echo "$mirrorstr" | sed "s/\([^,]\+\)\s*,\s*/\1 /g") )
+    # This does not the \s*,\s* trick, so we use sed instead to make it more
+    # robust.
+    #mirrors=( ${mirrorstr//,/ } )
+    # Check for all mirrors if URI of $1 is from mirror. If so add all other
+    # mirrors to (resmirror) list and break all loops.
+    for mirror in ${mirrors[@]}; do
+      # Real expension.
+      if [[ "$1" == "$mirror"*  ]]; then
+        filepath=${1#${mirror}}
+        # Build list for aria download list.
+        list="${mirrors[@]}"
+        echo -e "${list// /${filepath}\t}$filepath\n"
+        return 0
+      fi
+    done
+  done
+  # No other mirrors found.
+  echo "$1"
+}
+
 # Get the package URLs.
 get_uris(){
+  # Add header to overwrite file.
+  echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
   #      package URIs.
-  apt-get -y --print-uris $@ | egrep -o -e "(ht|f)tp://[^\']+" > "$DLLIST"
+  for uri in $(apt-get -y --print-uris $@ | egrep -o -e "(http(s|)|(s|)ftp)://[^\']+"); do
+  #for uri in $(cat foo); do
+    echo "$(get_mirrors "$uri")" >> "$DLLIST"
+    #echo " dir=$DLDIR" >> "$DLLIST"
+    echo " out=$(basename $uri)" >> "$DLLIST"
+  done
 }
 
 # Create and insert a PID number to lockfile.
@@ -194,9 +229,10 @@ lockfile-touch "$LCK_FILE" &
 # job running in background (lockfile-touch process):
 export LOCKPID="$!"
 
-# Make sure one of the download managers is enabled
-if [ -z "$_DOWNLOADER" ]; then
-  msg "You must configure $CONFFILE to use axel or aria2c." "normal" "err"
+# Make sure aria2c (in general first parameter from _DOWNLOADER) is available.
+if [ ! $(command -v "${_DOWNLOADER[0]}") ]; then
+  msg "Command not found: ${_DOWNLOADER[0]}" "normal" "err"
+  msg "You must configure $CONFFILE to use aria2c or another supported download manager" "normal" "err"
   LCK_RM_1
 fi
 
@@ -261,8 +297,6 @@ if [ "$option" == "install" ]; then
 
       cd "$DLDIR" &>/dev/null || LCK_RM_1
 
-      #FIXME: Better handling of finished downloads but canceled apt-fast
-      #       axel redownloads deb again (with [0-9] suffix).
       eval "${_DOWNLOADER}" # execute downloadhelper command
       if [ $(find "$DLDIR" -printf . | wc -c) -gt 1 ]; then
         # Move all packages to the apt install directory by force to ensure
@@ -287,7 +321,6 @@ elif [ "$option" == "clean" ]; then
   }
 
 elif [ "$option" == "download" ]; then
-  #NOTE: axel does not recognize already downloaded packages.
   get_uris $@
   eval "${_DOWNLOADER}"
 

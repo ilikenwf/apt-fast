@@ -102,15 +102,11 @@ LCK_FILE="/tmp/apt-fast"
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
 _APTMGR=apt-get
-eval $(apt-config shell rootdir Dir)
-eval $(apt-config shell cachedir Dir::Cache)
-eval $(apt-config shell archivesdir Dir::Cache::archives)
-eval $(apt-config shell statedir Dir::State)
-eval $(apt-config shell listsdir Dir::State::lists)
-APTCACHE="${rootdir}${cachedir}${archivesdir}"
-DLDIR="$APTCACHE/apt-fast"
+eval $(apt-config shell APTCACHE Dir::Cache::archives/d)
+eval $(apt-config -o Dir::Cache::archives::apt-fast-partial=apt-fast shell DLDIR Dir::Cache::archives::apt-fast-partial/d)
+# Currently not needed.
+eval $(apt-config shell LISTDIR Dir::State::lists/d)
 DLLIST="/tmp/apt-fast.list"
-LISTDIR="${rootdir}${statedir}${listsdir}"
 _MAXINUM=5
 
 # Prefix in front of apt-fast output:

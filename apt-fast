@@ -103,7 +103,13 @@ LCK_FILE="/tmp/apt-fast"
 # temporary download list file, and maximal parallel downloads
 _APTMGR=apt-get
 eval $(apt-config shell APTCACHE Dir::Cache::archives/d)
-eval $(apt-config -o Dir::Cache::archives::apt-fast-partial=apt-fast shell DLDIR Dir::Cache::archives::apt-fast-partial/d)
+# Check if APT config option Dir::Cache::archives::apt-fast-partial is set.
+eval $(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)
+if [ -z "$apt_fast_partial" ]; then
+  eval $(apt-config -o Dir::Cache::archives::apt-fast-partial=apt-fast shell DLDIR Dir::Cache::archives::apt-fast-partial/d)
+else
+  eval $(apt-config shell DLDIR Dir::Cache::archives::apt-fast-partial/d)
+fi
 # Currently not needed.
 eval $(apt-config shell LISTDIR Dir::State::lists/d)
 DLLIST="/tmp/apt-fast.list"

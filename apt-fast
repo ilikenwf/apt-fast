@@ -216,9 +216,9 @@ get_uris(){
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
   #      package URIs.
-  for urimd5 in $(apt-get -y --print-uris $@ | egrep "^'([^']+)'.+( MD5Sum:\S+)\s*$" |
+  for urimd5 in $(apt-get -y --print-uris $@ | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
       sed "s/^'\(.\+\)'.*MD5Sum:\(\S\+\)\s*$/\1::MD5Sum:\2/"); do
-  #for urimd5 in $(cat foo | egrep "^'([^']+)'.+( MD5Sum:\S+)\s*$" |
+  #for urimd5 in $(cat foo | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
   #    sed "s/^'\(.\+\)'.*MD5Sum:\(\S\+\)\s*$/\1::MD5Sum:\2/"); do
     uri="${urimd5%::MD5Sum:*}"
     checksum="${urimd5#*::MD5Sum:}"

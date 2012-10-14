@@ -7,7 +7,7 @@
 .\" Public License as published by the Free Software Foundation; either
 .\" version 3 of the License, or (at your option) any later version.
 .\"
-.TH "APT\-FAST" "8" "2012-06-01" "apt\-fast 1.7" "apt\-fast Manual"
+.TH "APT\-FAST" "8" "2012-10-11" "apt\-fast 1.8" "apt\-fast Manual"
 .SH "NAME"
 .LP
 apt\-fast \- shellscript wrapper for apt\-get or aptitude to speed up downloads
@@ -27,7 +27,7 @@ apt\-fast \- shellscript wrapper for apt\-get or aptitude to speed up downloads
 drastically improve APT download times by downloading packages in parallel,
 with multiple connections per package.
 .br
-It uses \fBaria2c\fR(1) or \fBaxel\fR(1) as default download accelerator.
+It uses \fBaria2c\fR(1) as default download accelerator.
 .LP
 For every command or option you can use either \fBapt\-get\fR(8) or
 \fBaptitude\fR(1) syntax, depending which package manager you have selected
@@ -109,4 +109,3 @@ https://github.com/ilikenwf/apt-fast/issues/new
 \fBapt\-get\fR(8),
 \fBaptitude\fR(8),
 \fBaria2c\fR(1),
-\fBaxel\fR(1)

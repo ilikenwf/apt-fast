@@ -1,5 +1,5 @@
 <!---
-apt-fast v1.7
+apt-fast v1.8
 Use this just like aptitude or apt-get for faster package downloading.
 
 Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
@@ -10,7 +10,7 @@ Public License as published by the Free Software Foundation; either
 version 3 of the License, or (at your option) any later version.
 -->
 
-apt-fast 1.7
+apt-fast 1.8
 ============
 apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically
 improve apt download times by downloading packages in parallel, with multiple
@@ -35,19 +35,29 @@ following:
     chmod +x /usr/bin/apt-fast
     cp apt-fast.conf /etc
 
-You need to have a console download manager installed - [aria2c](http://aria2.sourceforge.net/)
-and [axel](http://axel.alioth.debian.org/) are known to work for this script.
-aria2c is recommended. Before first run open /etc/apt-fast.conf in a text
-editor and uncomment the line for your download manager before using it and
-configure the other options as well.
+You need to have [aria2c](http://aria2.sourceforge.net/) installed:
 
     apt-get install aria2
-*OR*
-
-    apt-get install axel
 
 Then, you should be ready to use it - simply run apt-fast instead of apt-get
 or aptitude any time you find yourself needing to manage packages!
+
+
+### Multiple mirrors ###
+It is recommended to add some local mirrors to share bandwidth with multiple
+mirrors and don't heavily pull from a single server. This will also speedup
+download.  
+Look at your distribution's archive mirror list and select some mirrors.
+ * Debian: http://www.debian.org/mirror/list
+ * Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
+Then add them to whitespace and comma separated list in config file, e.g.:
+    MIRRORS=( 'http://ftp.debian.org/debian,http://ftp2.de.debian.org/debian,http://ftp.de.debian.org/debian,ftp://ftp.uni-kl.de/debian'
+              'http://archive.ubuntu.com/ubuntu,http://de.archive.ubuntu.com/ubuntu,http://ftp.halifax.rwth-aachen.de/ubuntu,http://ftp.uni-kl.de/pub/linux/ubuntu,http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
+
+*NOTE:* Write also your mirrors listed in your sources.list into that list to
+make sure associated mirrors are handled properly. Remember: Commas separate
+mirrors for same archive, whitespaces separate different archives (e.g.
+official archive and PPA are different archives).
 
 
 ### Autocompletion ###

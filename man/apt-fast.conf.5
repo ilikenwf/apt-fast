@@ -7,7 +7,7 @@
 .\" Public License as published by the Free Software Foundation; either
 .\" version 3 of the License, or (at your option) any later version.
 .\"
-.TH "APT\-FAST.CONF" "5" "2012-06-01" "apt\-fast 1.7" "apt\-fast Manual"
+.TH "APT\-FAST.CONF" "5" "2012-10-11" "apt\-fast 1.8" "apt\-fast Manual"
 .SH "NAME"
 .LP
 apt\-fast.conf \- configuration file for \fBapt\-fast\fR(5)
@@ -33,6 +33,35 @@ item, e.g.: DOWNLOADBEFORE=true
 .br
 Default: disabled
 .TP
+\fBMIRRORS\fR
+Choose mirror list to speed up downloads from same archive. To select some
+mirrors take a look at your distribution's archive mirror lists.
+.br
+Debian: http://www.debian.org/mirror/list
+.br
+Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
+
+Include standard mirror in list to associate it with alternative mirrors. List
+of different archives is whitespace separated. List of alternative mirrors is
+comma separated.
+.br
+If you use multiple archives make sure to add a whitespace after opening
+bracket and before closing bracket.
+
+Examples:
+To use some German mirrors and official Debian and Ubuntu archives you can use:
+.br
+MIRRORS=( 'http://ftp.debian.org/debian,http://ftp2.de.debian.org/debian,http://ftp.de.debian.org/debian,ftp://ftp.uni-kl.de/debian'
+.br
+          'http://archive.ubuntu.com/ubuntu,http://de.archive.ubuntu.com/ubuntu,http://ftp.halifax.rwth-aachen.de/ubuntu,http://ftp.uni-kl.de/pub/linux/ubuntu,http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
+.br
+To use French Ubuntu mirrors you can use:
+.br
+MIRRORS=( 'http://fr.archive.ubuntu.com/ubuntu,http://bouyguestelecom.ubuntu.lafibre.info/ubuntu,http://mirror.ovh.net/ubuntu,http://ubuntu-archive.mirrors.proxad.net/ubuntu' )
+
+.br
+Default: disabled
+.TP
 \fB_MAXNUM\fR
 This item is optional but is used in proposed download helper command
 (configuration item \fB_DOWNLOADER\fR). You can use it as count of maximum
@@ -48,11 +77,23 @@ Default: '/tmp/apt-fast.list'
 .TP
 \fB_DOWNLOADER\fR
 Download helper command how to download package URIs stored in \fBDLLIST\fR
-file.
+file. This command has to support following input file syntax (\\t is a tab
+character):
 .br
-aria2: 'aria2c \-c \-j ${_MAXNUM} \-i ${DLLIST} \-\-connect\-timeout=600 \-\-timeout=600 \-m0'
+# Comment
 .br
-axel:  'cat ${DLLIST} | xargs \-l1 axel \-n ${_MAXNUM} \-a'
+MIRROR1\\tMIRROR2\\tMIRROR3...
+.br
+ out=FILENAME1
+.br
+MIRROR1\\tMIRROR2\\tMIRROR3...
+.br
+ out=FILENAME2
+.br
+etc.
+
+.br
+Default: 'aria2c \-c \-j ${_MAXNUM} \-i ${DLLIST} \-\-connect\-timeout=600 \-\-timeout=600 \-m0'
 .TP
 \fBDLDIR\fR
 Directory where to download packages with download helper to.
@@ -109,4 +150,3 @@ before \fBapt\-fast\fR(8) moves them to package cache. Configuration item:
 \fBapt\-get\fR(8),
 \fBaptitude\fR(8),
 \fBaria2c\fR(1),
-\fBaxel\fR(1)

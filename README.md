@@ -62,12 +62,12 @@ official archive and PPA are different archives).
 
 ### Autocompletion ###
 #### Bash ####
-    cp completion/bash/apt-fast /etc/bash_completion.d/
+    cp completions/bash/apt-fast /etc/bash_completion.d/
     chown root:root /etc/bash_completion.d/apt-fast
     . /etc/bash_completion
 
 #### Zsh ####
-    cp completion/zsh/_apt-fast /usr/share/zsh/functions/Completion/Debian/
+    cp completions/zsh/_apt-fast /usr/share/zsh/functions/Completion/Debian/
     chown root:root /usr/share/zsh/functions/Completion/Debian/_apt-fast
     source /usr/share/zsh/functions/Completion/Debian/_apt-fast
 

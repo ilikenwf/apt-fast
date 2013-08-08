@@ -133,7 +133,9 @@ _DOWNLOADER='aria2c -c -j ${_MAXNUM} -i ${DLLIST} --connect-timeout=600 --timeou
 
 # Load config file.
 CONFFILE="/etc/apt-fast.conf"
-source "$CONFFILE"
+if [ -e "$CONFFILE" ]; then
+    source "$CONFFILE"
+fi
 
 # Now overwrite with preserved values if values were set before (compare with
 # 'random' string).

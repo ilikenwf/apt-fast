@@ -81,7 +81,7 @@ official archive and PPA are different archives).
 
 License
 -------
-Consider apt-fast and all of it's derivatives licensed under the GNU GPLv3+.
+Consider apt-fast and all of its derivatives licensed under the GNU GPLv3+.
 
 Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com  
 Improvements, maintenance, revisions - 2012 Dominique Lasserre

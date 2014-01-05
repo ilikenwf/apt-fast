@@ -46,7 +46,7 @@ or aptitude any time you find yourself needing to manage packages!
 ### Multiple mirrors ###
 It is recommended to add some local mirrors to share bandwidth with multiple
 mirrors and don't heavily pull from a single server. This will also speedup
-download.  
+download.
 Look at your distribution's archive mirror list and select some mirrors.
  * Debian: http://www.debian.org/mirror/list
  * Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
@@ -81,9 +81,9 @@ official archive and PPA are different archives).
 
 License
 -------
-Consider apt-fast and all of it's derivatives licensed under the GNU GPLv3+.
+Consider apt-fast and all of its derivatives licensed under the GNU GPLv3+.
 
-Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com  
+Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
 Improvements, maintenance, revisions - 2012 Dominique Lasserre
 
 

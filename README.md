@@ -23,8 +23,9 @@ Setup/Install
 You can use the PPA to get a graphical configuration file setup and automatic
 updates, for details see:
 
-[ppa:saiarcot895/myppa(for Ubuntu 14.04)](https://launchpad.net/~saiarcot895/+archive/ubuntu/myppa)
-[ppa:apt-fast/stable(out of date, for Ubuntu 11.04~13.10)](https://code.launchpad.net/~apt-fast/+archive/stable).
+* [ppa:saiarcot895/myppa(for Ubuntu 14.04)](https://launchpad.net/~saiarcot895/+archive/ubuntu/myppa)
+
+* [ppa:apt-fast/stable(out of date, for Ubuntu 11.04~13.10)](https://code.launchpad.net/~apt-fast/+archive/stable)
 
 Some distros, such as PCLinuxOS include apt-fast in their repos.
 

@@ -130,7 +130,7 @@ endColor='\e[0m'
 APT_FAST_TIMEOUT=60
 
 # Download command.
-_DOWNLOADER='aria2c -c -j ${_MAXNUM} -x ${_MAXNUM} -i ${DLLIST} --connect-timeout=600 --timeout=600 -m0'
+_DOWNLOADER='aria2c -c -j ${_MAXNUM} -x ${_MAXNUM} -s ${_MAXNUM} -i ${DLLIST} --min-split-size=1M --connect-timeout=600 --timeout=600 -m0'
 
 # Load config file.
 CONFFILE="/etc/apt-fast.conf"

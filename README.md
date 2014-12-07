@@ -23,7 +23,7 @@ Setup/Install
 You can use the PPA to get a graphical configuration file setup and automatic
 updates, for details see:
 
-* [ppa:saiarcot895/myppa(for Ubuntu 14.04)](https://launchpad.net/~saiarcot895/+archive/ubuntu/myppa)
+* [ppa:saiarcot895/myppa(for Ubuntu 14.04 and later versions)](https://launchpad.net/~saiarcot895/+archive/ubuntu/myppa)
 
 * [ppa:apt-fast/stable(out of date, for Ubuntu 11.04~13.10)](https://code.launchpad.net/~apt-fast/+archive/stable)
 

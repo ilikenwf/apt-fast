@@ -98,6 +98,7 @@ fi
 # We need lock for non-root commands too, because we only have one download
 # list file.
 LCK_FILE="/tmp/apt-fast"
+LCK_FD=99
 
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
@@ -129,11 +130,13 @@ endColor='\e[0m'
 APT_FAST_TIMEOUT=60
 
 # Download command.
-_DOWNLOADER='aria2c -c -j ${_MAXNUM} -i ${DLLIST} --connect-timeout=600 --timeout=600 -m0'
+_DOWNLOADER='aria2c -c -j ${_MAXNUM} -x ${_MAXNUM} -s ${_MAXNUM} -i ${DLLIST} --min-split-size=1M --connect-timeout=600 --timeout=600 -m0'
 
 # Load config file.
 CONFFILE="/etc/apt-fast.conf"
-source "$CONFFILE"
+if [ -e "$CONFFILE" ]; then
+    source "$CONFFILE"
+fi
 
 # Now overwrite with preserved values if values were set before (compare with
 # 'random' string).
@@ -160,29 +163,37 @@ if [ ! -t 1 ]; then
 fi
 
 
-# Check if a lock file exists.
-if [ -f "$LCK_FILE.lock" ]; then
+msg_already_running()
+{
   msg "apt-fast already running!" "warning"
   msg "Verify that all apt-fast processes are finished then remove $LCK_FILE.lock and try again." "hint"
+}
+
+# Check if a lock file exists.
+if [ -f "$LCK_FILE.lock" ]; then
+  msg_already_running
   exit 1
 fi
 
-# Remove lock file.
-LCK_RM() {
-  # Remove URI file to prevent write permissions issues in /tmp directory.
-  #[ -f "$DLLIST" ] && rm -f "$DLLIST"
-  if [ -n "$LOCKPID" ]; then
-    kill "$LOCKPID" && lockfile-remove "$LCK_FILE"
-  fi
+
+# create the lock file and lock it, die on failure
+_create_lock()
+{
+    eval "exec $LCK_FD>\"$LCK_FILE.lock\""
+
+    trap "_remove_lock; exit" EXIT
+    trap "_remove_lock; exit 1;" INT KILL TERM
+
+    flock -n $LCK_FD || { msg_already_running; exit 1; }
 }
 
-# Remove lock file and exit with code 1.
-LCK_RM_1() {
-  LCK_RM
-  exit 1
+# unlock and remove the lock file
+_remove_lock()
+{
+    flock -u "$LCK_FD" 2>/dev/null
+    rm -f "$LCK_FILE.lock"
 }
 
-trap "LCK_RM_1" 2 9 15
 
 # Check if mirrors are available. And if so add all mirrors to download list.
 get_mirrors(){
@@ -233,25 +244,21 @@ get_uris(){
 }
 
 # Create and insert a PID number to lockfile.
-lockfile-create "$LCK_FILE"
-lockfile-touch "$LCK_FILE" &
-# Declare global variable (to use it in LCK_RM function) and save PID of last
-# job running in background (lockfile-touch process):
-export LOCKPID="$!"
+_create_lock
 
 # Make sure aria2c (in general first parameter from _DOWNLOADER) is available.
 CMD="$(echo "$_DOWNLOADER" | sed 's/^\s*\([^ ]\+\).*$/\1/')"
 if [ ! $(command -v "$CMD") ]; then
   msg "Command not found: $CMD" "normal" "err"
   msg "You must configure $CONFFILE to use aria2c or another supported download manager" "normal" "err"
-  LCK_RM_1
+  exit 1
 fi
 
 # Make sure package manager is available.
 if [ ! $(command -v "$_APTMGR") ]; then
   msg "\`$_APTMGR\` command not available." "warning"
   msg "You must configure $CONFFILE to use either apt-get or aptitude." "normal" "err"
-  LCK_RM_1
+  exit 1
 fi
 
 
@@ -284,7 +291,7 @@ if [ "$option" == "install" ]; then
     echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
 
     while ((!updsys)); do
-      read -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg "\n Timed out." "warning"; LCK_RM_1; }
+      read -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg "\n Timed out." "warning"; exit 1; }
       case "$answer" in
         [JjYy])    result=1; updsys=1 ;;
         [Nn])      result=0; updsys=1 ;;
@@ -306,7 +313,7 @@ if [ "$option" == "install" ]; then
         mkdir -p -- "$DLDIR"
       fi
 
-      cd "$DLDIR" &>/dev/null || LCK_RM_1
+      cd "$DLDIR" &>/dev/null || exit 1
 
       eval "${_DOWNLOADER}" # execute downloadhelper command
       if [ $(find "$DLDIR" -printf . | wc -c) -gt 1 ]; then
@@ -317,7 +324,7 @@ if [ "$option" == "install" ]; then
       cd - &>/dev/null
     fi
   else
-    LCK_RM_1
+    exit 1
   fi
 
   #FIXME: quotes get lost: apt-fast install "foo*" -> apt-get install foo*
@@ -360,4 +367,3 @@ fi
 
 
 # After error or all done remove our lockfile
-LCK_RM

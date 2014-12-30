@@ -19,6 +19,24 @@ connections per package.
 
 Setup/Install
 -------------
+
+#### Ubuntu 14.04 and later versions
+
+```
+sudo add-apt-repository ppa:saiarcot895/myppa
+sudo apt-get update
+sudo apt-get -y install apt-fast
+```
+
+#### for Ubuntu 14.04 and later versions
+
+```
+sudo add-apt-repository ppa:apt-fast/stable
+sudo apt-get update
+sudo apt-get -y install apt-fast
+```
+
+
 ### PPA ###
 You can use the PPA to get a graphical configuration file setup and automatic
 updates, for details see:

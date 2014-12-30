@@ -28,7 +28,7 @@ sudo apt-get update
 sudo apt-get -y install apt-fast
 ```
 
-#### for Ubuntu 14.04 and later versions
+#### Ubuntu 11.04~13.10 (out of date)
 
 ```
 sudo add-apt-repository ppa:apt-fast/stable

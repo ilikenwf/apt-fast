@@ -227,7 +227,7 @@ get_uris(){
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
   #      package URIs.
-  for urimd5 in $(apt-get -y --print-uris $@ | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
+  for urimd5 in $(apt-get -y --print-uris "$@" | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
       sed "s/^'\(.\+\)'.*MD5Sum:\(\S\+\)\s*$/\1::MD5Sum:\2/"); do
   #for urimd5 in $(cat foo | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
   #    sed "s/^'\(.\+\)'.*MD5Sum:\(\S\+\)\s*$/\1::MD5Sum:\2/"); do
@@ -266,7 +266,7 @@ fi
 if [ "$option" == "install" ]; then
   msg "\n Working... this may take a while." "normal"
 
-  get_uris $@
+  get_uris "$@"
 
   # Check if "assume yes" switch is enabled and if yes enable $DOWNLOADBEFORE.
   #TODO: Get real value over APT items APT::Get::Assume-Yes and
@@ -327,29 +327,27 @@ if [ "$option" == "install" ]; then
     exit 1
   fi
 
-  #FIXME: quotes get lost: apt-fast install "foo*" -> apt-get install foo*
-  "${_APTMGR}" $@
+  "${_APTMGR}" "$@"
 
 
 elif [ "$option" == "clean" ]; then
-  #FIXME: quotes get lost (see above)
-  "${_APTMGR}" $@ && {
+  "${_APTMGR}" "$@" && {
     find "$DLDIR" -maxdepth 1 -type f -delete
     [ -f "$DLLIST" ] && rm -f -- "$DLLIST"*
   }
 
 elif [ "$option" == "download" ]; then
-  get_uris $@
+  get_uris "$@"
   eval "${_DOWNLOADER}"
 
 elif [ "$option" == "source" ]; then
   msg "\n Working... this may take a while.\n" "normal"
-  get_uris $@
+  get_uris "$@"
   eval "${_DOWNLOADER}"
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also
   # more hardened (e.g. some options like --compile are available).
-  "${_APTMGR}" $@
+  "${_APTMGR}" "$@"
   # Uncomment following snippet to extract source directly and comment
   # both lines before.
   #while read srcfile; do
@@ -360,8 +358,7 @@ elif [ "$option" == "source" ]; then
 
 # Execute package manager directly if unknown options are passed.
 else
-  #FIXME: quotes get lost (see above)
-  "${_APTMGR}" $@
+  "${_APTMGR}" "$@"
 
 fi
 

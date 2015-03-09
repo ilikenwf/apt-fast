@@ -12,10 +12,7 @@ version 3 of the License, or (at your option) any later version.
 
 apt-fast 1.8
 ============
-apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically
-improve apt download times by downloading packages in parallel, with multiple
-connections per package.
-
+apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically improve apt download times by downloading packages in parallel, with multiple connections per package.
 
 Setup/Install
 -------------
@@ -36,21 +33,16 @@ sudo apt-get update
 sudo apt-get -y install apt-fast
 ```
 
-
-### PPA ###
-You can use the PPA to get a graphical configuration file setup and automatic
-updates, for details see:
+### Ubuntu PPA ###
+You can use the Ubuntu PPA to get a graphical configuration file setup and automatic updates, for details see:
 
 * [ppa:saiarcot895/myppa(for Ubuntu 14.04 and later versions)](https://launchpad.net/~saiarcot895/+archive/ubuntu/myppa)
-
 * [ppa:apt-fast/stable(out of date, for Ubuntu 11.04~13.10)](https://code.launchpad.net/~apt-fast/+archive/stable)
 
 Some distros, such as PCLinuxOS include apt-fast in their repos.
 
-
 ### Manual ###
-For those of you who want to manually install it, download it and perform the
-following:
+A manual install can be performed as such:
 
     cp apt-fast /usr/bin/
     chmod +x /usr/bin/apt-fast
@@ -60,26 +52,26 @@ You need to have [aria2c](http://aria2.sourceforge.net/) installed:
 
     apt-get install aria2
 
-Then, you should be ready to use it - simply run apt-fast instead of apt-get
-or aptitude any time you find yourself needing to manage packages!
-
+Then simply run apt-fast instead of apt-get or aptitude.
 
 ### Multiple mirrors ###
-It is recommended to add some local mirrors to share bandwidth with multiple
-mirrors and don't heavily pull from a single server. This will also speedup
-download.
-Look at your distribution's archive mirror list and select some mirrors.
- * Debian: http://www.debian.org/mirror/list
- * Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
+Adding multiple mirrors will further speed up downloads and distribute load, be sure to add mirrors near to your location.
+Official mirror lists:
+
+* Debian: http://www.debian.org/mirror/list
+* Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
+
 Then add them to whitespace and comma separated list in config file, e.g.:
-    MIRRORS=( 'http://ftp.debian.org/debian,http://ftp2.de.debian.org/debian,http://ftp.de.debian.org/debian,ftp://ftp.uni-kl.de/debian'
-              'http://archive.ubuntu.com/ubuntu,http://de.archive.ubuntu.com/ubuntu,http://ftp.halifax.rwth-aachen.de/ubuntu,http://ftp.uni-kl.de/pub/linux/ubuntu,http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
 
-*NOTE:* Write also your mirrors listed in your sources.list into that list to
-make sure associated mirrors are handled properly. Remember: Commas separate
-mirrors for same archive, whitespaces separate different archives (e.g.
-official archive and PPA are different archives).
+```
+MIRRORS=( 'http://ftp.debian.org/debian, http://ftp2.de.debian.org/debian, http://ftp.de.debian.org/debian, ftp://ftp.uni-kl.de/debian' )
+```
 
+```
+MIRRORS=( 'http://archive.ubuntu.com/ubuntu, http://de.archive.ubuntu.com/ubuntu, http://ftp.halifax.rwth-aachen.de/ubuntu, http://ftp.uni-kl.de/pub/linux/ubuntu, http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
+```
+
+*NOTE:* To use any mirrors you may have in sources.list or sources.list.d you will need to add them to the apt-fast.conf mirror list.
 
 ### Autocompletion ###
 #### Bash ####
@@ -92,13 +84,11 @@ official archive and PPA are different archives).
     chown root:root /usr/share/zsh/functions/Completion/Debian/_apt-fast
     source /usr/share/zsh/functions/Completion/Debian/_apt-fast
 
-
-### Manual page installation ###
+### Man page installation ###
     cp ./man/apt-fast.8 /usr/share/man/man8
     gzip -f9 /usr/share/man/man8/apt-fast.8
     cp ./man/apt-fast.conf.5 /usr/share/man/man5
     gzip -f9 /usr/share/man/man5/apt-fast.conf.5
-
 
 License
 -------

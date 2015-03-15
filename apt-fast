@@ -58,6 +58,9 @@ for arguments in $@; do
   fi
 done
 
+# Downloader command name
+DL_CMD="aria2c"
+
 # To handle priority of options correctly (environment over config file vars)
 # we need to preserve all interesting env variables. As this wouldn't be
 # difficult enough we have to preserve complete env vars (especially if value
@@ -130,7 +133,7 @@ endColor='\e[0m'
 APT_FAST_TIMEOUT=60
 
 # Download command.
-_DOWNLOADER='aria2c -c -j ${_MAXNUM} -x ${_MAXNUM} -s ${_MAXNUM} -i ${DLLIST} --min-split-size=1M --connect-timeout=600 --timeout=600 -m0'
+_DOWNLOADER='${DL_CMD} -c -j ${_MAXNUM} -x ${_MAXNUM} -s ${_MAXNUM} -i ${DLLIST} --min-split-size=1M --connect-timeout=600 --timeout=600 -m0'
 
 # Load config file.
 CONFFILE="/etc/apt-fast.conf"
@@ -247,9 +250,8 @@ get_uris(){
 _create_lock
 
 # Make sure aria2c (in general first parameter from _DOWNLOADER) is available.
-CMD="$(echo "$_DOWNLOADER" | sed 's/^\s*\([^ ]\+\).*$/\1/')"
-if [ ! $(command -v "$CMD") ]; then
-  msg "Command not found: $CMD" "normal" "err"
+if [ ! $(command -v "$DL_CMD") ]; then
+  msg "Command not found: $DL_CMD" "normal" "err"
   msg "You must configure $CONFFILE to use aria2c or another supported download manager" "normal" "err"
   exit 1
 fi

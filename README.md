@@ -101,7 +101,7 @@ Improvements, maintenance, revisions - 2012 Dominique Lasserre
 Special thanks
 --------------
  * Travis/travisn000 - support for complex apt-get commands
- * Allan Hoffmeister - aria2c support
+ * [Alan Hoffmeister](https://github.com/alanhoff) - aria2c support
  * Abhishek Sharma - aria2c with proxy support
  * Luca Marchetti - improvements on the locking system and downloader execution
  * Richard Klien - Autocompletion, Download Size Checking (made for on ubuntu, untested on other distros)

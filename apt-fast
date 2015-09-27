@@ -231,11 +231,13 @@ get_uris(){
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
   #      package URIs.
-  apturis=$(apt-get -y --print-uris "$@")
+  apturis=$(apt-get -qq --print-uris "$@")
   DLLISTCOUNT=$( echo "$apturis" | grep -c "^'" )
-  DLLISTBYTES=$( echo "$apturis" | grep ^Need \
-    | cut -d' ' -f4-5 \
-    | tr -d '[:space:][B]' \
+  DLLISTBYTES=$( echo "$apturis" \
+    | while read line; do
+        echo $line | cut -d' ' -f3
+      done \
+    | awk '{total = total + $1}END{print total}' \
     | numfmt --from=si )
   for urimd5 in $( echo "$apturis" | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
       sed "s/^'\(.\+\)'.*MD5Sum:\(\S\+\)\s*$/\1::MD5Sum:\2/"); do

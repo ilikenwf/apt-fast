@@ -227,17 +227,26 @@ get_uris(){
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
   #      package URIs.
-  for urimd5 in $(apt-get -y --print-uris "$@" | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
-      sed "s/^'\(.\+\)'.*MD5Sum:\(\S\+\)\s*$/\1::MD5Sum:\2/"); do
-  #for urimd5 in $(cat foo | egrep "^'(http(s|)|(s|)ftp)://[^']+'.+ MD5Sum:\S+\s*$" |
-  #    sed "s/^'\(.\+\)'.*MD5Sum:\(\S\+\)\s*$/\1::MD5Sum:\2/"); do
-    uri="${urimd5%::MD5Sum:*}"
-    checksum="${urimd5#*::MD5Sum:}"
+  apt-get -y --print-uris "$@" | while read pkg_uri_info
+  do
+    uri=$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")
+    checksum=$(echo "$pkg_uri_info" | cut -d' ' -f4 | cut -d':' -f2)
+    filename=$(basename $uri) #$(echo "$pkg_uri_info" | cut -d' ' -f2)
+
+    # Aria only supports md5 and sha1. If --print-uris return other than MD5 replace it manually
+    if echo "$pkg_uri_info" | grep -q -v 'MD5Sum'
+    then
+      pkg_name=$(basename $(dirname $uri))
+      patch_md5=$(apt-cache show $pkg_name | grep MD5sum | head -n 1)
+      checksum=$(echo $patch_md5 | cut -d' ' -f2)
+    fi
+
     echo "$(get_mirrors "$uri")" >> "$DLLIST"
     #echo " dir=$DLDIR" >> "$DLLIST"
     echo " checksum=md5=$checksum" >> "$DLLIST"
-    echo " out=$(basename $uri)" >> "$DLLIST"
+    echo " out=$filename" >> "$DLLIST"
   done
+
   #cat "$DLLIST"
   #LCK_RM
   #exit

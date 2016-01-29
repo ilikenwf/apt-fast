@@ -229,15 +229,24 @@ get_uris(){
   #      package URIs.
   apt-get -y --print-uris "$@" | while read pkg_uri_info
   do
+  # --print-uris format is: 'fileurl' filename filesize checksum_hint:filechecksum
     uri=$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")
+    filename=$(echo "$pkg_uri_info" | cut -d' ' -f2)
+    filesize=$(echo "$pkg_uri_info" | cut -d' ' -f3)
     checksum=$(echo "$pkg_uri_info" | cut -d' ' -f4 | cut -d':' -f2)
-    filename=$(basename $uri) #$(echo "$pkg_uri_info" | cut -d' ' -f2)
 
-    # Aria only supports md5 and sha1. If --print-uris return other than MD5 replace it manually
+    ## Aria only supports md5 and sha1. If --print-uris return other than
+    # MD5, we need to replace it (by now behavior is return strongest).
+    # Using apt-cache show package=version to ensure recover single and
+    # correct package version.
+    # Warning: assuming that package naming uses '_' as field separator.
+    # Therefore, this code expects package-name_version_arch.deb Otherways
+    # below code will fail resoundingly
     if echo "$pkg_uri_info" | grep -q -v 'MD5Sum'
     then
-      pkg_name=$(basename $(dirname $uri))
-      patch_md5=$(apt-cache show $pkg_name | grep MD5sum | head -n 1)
+      pkg_name=$(echo "$filename" | cut -d'_' -f1)
+      pkg_version=$(echo "$filename" | cut -d'_' -f2)
+      patch_md5=$(apt-cache show $pkg_name=$pkg_version | grep MD5sum | head -n 1)
       checksum=$(echo $patch_md5 | cut -d' ' -f2)
     fi
 

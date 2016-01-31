@@ -20,6 +20,7 @@ uninstall: /usr/bin/apt-fast
 	rm -rf /usr/bin/apt-fast /etc/apt-fast.conf \
 	/usr/share/man/man5/apt-fast.conf.5.gz /usr/share/man/man8/apt-fast.8.gz \
 	/usr/share/zsh/functions/Completion/Debian/_apt-fast /etc/bash_completion.d/apt-fast
+	@echo "Please manually remove deb package - aria2 if you don't need it anymore."
 
 /usr/bin/apt-fast:
 	@echo "Not installed" 1>&2

@@ -72,6 +72,10 @@ TMP_DLDIR="${DLDIR-${TMP_RANDOM}}"
 TMP_DLLIST="${DLLIST-${TMP_RANDOM}}"
 TMP_LISTDIR="${LISTDIR-${TMP_RANDOM}}"
 TMP__MAXNUM="${MAXNUM-${TMP_RANDOM}}"
+TMP__MAXCONPERSRV="${MAXCONPERSRV-${TMP_RANDOM}}"
+TMP__SPLITCON="${SPLITCON-${TMP_RANDOM}}"
+TMP__MINSPLITSZ=${MINSPLITSZ-${TMP_RANDOM}}
+TMP__PIECEALGO=${PIECEALGO-${TMP_RANDOM}}
 TMP_aptfast_prefix="${aptfast_prefix-${TMP_RANDOM}}"
 TMP_APT_FAST_TIMEOUT="${APT_FAST_TIMEOUT-${TMP_RANDOM}}"
 
@@ -86,7 +90,11 @@ if [ "$root" = 1 -a "$UID" != 0 ]; then
             DLDIR="$TMP_DLDIR" \
             DLLIST="$TMP_DLLIST" \
             LISTDIR="$TMP_LISTDIR" \
-            _MAXNUM="$TMP_MAXNUM" \
+            _MAXNUM="$TMP__MAXNUM" \
+            _MAXCONPERSRV="$TMP__MAXCONPERSRV" \
+            _SPLITCON="$TMP__SPLITCON" \
+            _MINSPLITSZ="$TMP__MINSPLITSZ" \
+            _PIECEALGO="$TMP__PIECEALGO" \
             aptfast_prefix="$TMP_aptfast_prefix" \
             APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT" "$0" "$@"
 fi
@@ -114,7 +122,11 @@ fi
 # Currently not needed.
 eval $(apt-config shell LISTDIR Dir::State::lists/d)
 DLLIST="/tmp/apt-fast.list"
-_MAXNUM=5
+_MAXNUM=8
+_MAXCONPERSRV=10
+_SPLITCON=8
+_MINSPLITSZ="1M"
+_PIECEALGO="default"
 
 # Prefix in front of apt-fast output:
 aptfast_prefix=
@@ -130,7 +142,7 @@ endColor='\e[0m'
 APT_FAST_TIMEOUT=60
 
 # Download command.
-_DOWNLOADER='aria2c -c -j ${_MAXNUM} -x ${_MAXNUM} -s ${_MAXNUM} -i ${DLLIST} --min-split-size=1M --connect-timeout=600 --timeout=600 -m0'
+_DOWNLOADER='aria2c -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} -i ${DLLIST} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --connect-timeout=600 --timeout=600 -m0'
 
 # Load config file.
 CONFFILE="/etc/apt-fast.conf"
@@ -148,6 +160,10 @@ fi
 [ "$TMP_DLLIST" = "$TMP_RANDOM" ] || DLLIST="$TMP_DLLIST"
 [ "$TMP_LISTDIR" = "$TMP_RANDOM" ] || LISTDIR="$TMP_LISTDIR"
 [ "$TMP__MAXNUM" = "$TMP_RANDOM" ] || _MAXNUM="$TMP__MAXNUM"
+[ "$TMP__MAXCONPERSRV" = "$TMP_RANDOM" ] || _MAXCONPERSRV="$TMP__MAXCONPERSRV"
+[ "$TMP__SPLITCON" = "$TMP_RANDOM" ] || _SPLITCON="$TMP__SPLITCON"
+[ "$TMP__MINSPLITSZ" = "$TMP_RANDOM" ] || _MINSPLITSZ="$TMP__MINSPLITSZ"
+[ "$TMP__PIECEALGO" = "$TMP_RANDOM" ] || _PIECEALGO="$TMP__PIECEALGO"
 [ "$TMP_aptfast_prefix" = "$TMP_RANDOM" ] || aptfast_prefix="$TMP_aptfast_prefix"
 [ "$TMP_APT_FAST_TIMEOUT" = "$TMP_RANDOM" ] || APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT"
 

@@ -210,6 +210,12 @@ _remove_lock()
     rm -f "$LCK_FILE.lock"
 }
 
+# decode url string
+# translates %xx but must not convert '+' in spaces
+urldecode()
+{
+    printf '%b' "${1//%/\\x}"
+}
 
 # Check if mirrors are available. And if so add all mirrors to download list.
 get_mirrors(){
@@ -245,11 +251,18 @@ get_uris(){
   #      package URIs.
   apt-get -y --print-uris "$@" | while read pkg_uri_info
   do
-  # --print-uris format is: 'fileurl' filename filesize checksum_hint:filechecksum
+    ## --print-uris format is:
+    # 'fileurl' filename filesize checksum_hint:filechecksum
     uri=$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")
     filename=$(echo "$pkg_uri_info" | cut -d' ' -f2)
     filesize=$(echo "$pkg_uri_info" | cut -d' ' -f3)
     checksum=$(echo "$pkg_uri_info" | cut -d' ' -f4 | cut -d':' -f2)
+    ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
+    # plain aptitude do not decode it when download and install it. Therefore, we
+    # will have ugly named packages at /var/cache/apt/archives but is the standard
+    # behavior.
+    # But package version must be decoded, otherways package=version calls will
+    # not work.
 
     ## Aria only supports md5 and sha1. If --print-uris return other than
     # MD5, we need to replace it (by now behavior is return strongest).
@@ -262,6 +275,7 @@ get_uris(){
     then
       pkg_name=$(echo "$filename" | cut -d'_' -f1)
       pkg_version=$(echo "$filename" | cut -d'_' -f2)
+      pkg_version=$(urldecode $pkg_version)
       patch_md5=$(apt-cache show $pkg_name=$pkg_version | grep MD5sum | head -n 1)
       checksum=$(echo $patch_md5 | cut -d' ' -f2)
     fi

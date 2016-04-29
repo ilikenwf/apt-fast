@@ -234,7 +234,7 @@ get_mirrors(){
         filepath=${1#${mirror}}
         # Build list for aria download list.
         list="${mirrors[@]}"
-        echo -e "${list// /${filepath}\t}$filepath\n"
+        echo -e "${list// /${filepath}\\t}$filepath\n"
         return 0
       fi
     done

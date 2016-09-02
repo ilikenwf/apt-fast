@@ -41,6 +41,13 @@ You can use the Ubuntu PPA to get a graphical configuration file setup and autom
 
 Some distros, such as PCLinuxOS include apt-fast in their repos.
 
+### Quick Install ###
+You can quickly install `apt-fast` by running:
+
+```bash
+/bin/bash -c "$(curl -sL https://git.io/vokNn)"
+```
+
 ### Manual ###
 A manual install can be performed as such:
 

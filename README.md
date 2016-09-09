@@ -69,8 +69,8 @@ You can quickly install `apt-fast` by running:
 A manual install can be performed as such:
 
 ```sh
-cp apt-fast /usr/bin/
-chmod +x /usr/bin/apt-fast
+cp apt-fast /usr/local/sbin/
+chmod +x /usr/local/sbin/apt-fast
 cp apt-fast.conf /etc
 ```
 
@@ -103,10 +103,12 @@ source /usr/share/zsh/functions/Completion/Debian/_apt-fast
 ### Man page installation ###
 
 ```sh
-cp ./man/apt-fast.8 /usr/share/man/man8
-gzip -f9 /usr/share/man/man8/apt-fast.8
-cp ./man/apt-fast.conf.5 /usr/share/man/man5
-gzip -f9 /usr/share/man/man5/apt-fast.conf.5
+mkdir -p /usr/local/share/man/man8/
+cp ./man/apt-fast.8 /usr/local/share/man/man8
+gzip -f9 /usr/local/share/man/man8/apt-fast.8
+mkdir -p /usr/local/share/man/man5/
+cp ./man/apt-fast.conf.5 /usr/local/share/man/man5
+gzip -f9 /usr/local/share/man/man5/apt-fast.conf.5
 ```
 
 Configuration

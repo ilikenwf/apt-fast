@@ -35,6 +35,7 @@ root=1  # default value: we need root privileges
 option=
 for arguments in $@; do
   if [ "$arguments" == "upgrade" ] ||
+      [ "$arguments" == "full-upgrade" ] ||
       [ "$arguments" == "install" ] ||
       [ "$arguments" == "dist-upgrade" ] ||
       [ "$arguments" == "build-dep" ]; then

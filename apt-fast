@@ -364,6 +364,7 @@ if [ "$option" == "install" ]; then
 
       cd "$DLDIR" &>/dev/null || exit 1
 
+      echo "0xcb ==== download ====>${_DOWNLOADER}"
       eval "${_DOWNLOADER}" # execute downloadhelper command
       if [ $(find "$DLDIR" -printf . | wc -c) -gt 1 ]; then
         # Move all packages to the apt install directory by force to ensure
@@ -387,11 +388,13 @@ elif [ "$option" == "clean" ]; then
 
 elif [ "$option" == "download" ]; then
   get_uris "$@"
+  echo "0xcb ==== download ====>${_DOWNLOADER}"
   eval "${_DOWNLOADER}"
 
 elif [ "$option" == "source" ]; then
   msg "\n Working... this may take a while.\n" "normal"
   get_uris "$@"
+  echo "0xcb ==== download ====>${_DOWNLOADER}"
   eval "${_DOWNLOADER}"
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also

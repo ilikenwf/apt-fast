@@ -8,7 +8,7 @@ _apt_fast()
     local cur prev special i
 
     COMPREPLY=()
-    cur=`_get_cword`
+    cur="$(_get_cword)"
     prev=${COMP_WORDS[COMP_CWORD-1]}
 
     for (( i=0; i < ${#COMP_WORDS[@]}-1; i++ )); do
@@ -57,24 +57,24 @@ _apt_fast()
     esac
 
     if [[ "$cur" == -* ]]; then
-        COMPREPLY=( $( compgen -W '-d -f -h -v -m -q -s -y -u -t -b -c -o \
-            --download-only --fix-broken --help --version --ignore-missing \
-            --fix-missing --no-download --quiet --simulate --just-print \
-            --dry-run --recon --no-act --yes --assume-yes --show-upgraded \
-            --only-source --compile --build --ignore-hold --target-release \
-            --no-upgrade --force-yes --print-uris --purge --reinstall \
-            --list-cleanup --default-release --trivial-only --no-remove \
-            --diff-only --no-install-recommends --tar-only --config-file \
+        COMPREPLY=( $( compgen -W '-d -f -h -v -m -q -s -y -u -t -b -c -o
+            --download-only --fix-broken --help --version --ignore-missing
+            --fix-missing --no-download --quiet --simulate --just-print
+            --dry-run --recon --no-act --yes --assume-yes --show-upgraded
+            --only-source --compile --build --ignore-hold --target-release
+            --no-upgrade --force-yes --print-uris --purge --reinstall
+            --list-cleanup --default-release --trivial-only --no-remove
+            --diff-only --no-install-recommends --tar-only --config-file
             --option --auto-remove' -- "$cur" ) )
     else
-        COMPREPLY=( $( compgen -W 'update upgrade dselect-upgrade \
-            dist-upgrade install remove purge source build-dep \
+        COMPREPLY=( $( compgen -W 'update upgrade dselect-upgrade
+            dist-upgrade install remove purge source build-dep
             check download clean autoclean autoremove changelog' -- "$cur" ) )
     fi
 
     return 0
 } &&
-complete -F _apt_fast $filenames apt-fast
+complete -F _apt_fast "$filenames" apt-fast
 
 # Local variables:
 # mode: shell-script

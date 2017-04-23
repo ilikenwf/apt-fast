@@ -1,8 +1,7 @@
 #!/bin/bash
-sudo apt-get install -y aria2 git
+sudo apt-get install -y aria2
 if ! [[ -f /usr/bin/apt-fast ]]; then
-  git clone https://github.com/ilikenwf/apt-fast /tmp/apt-fast
-  sudo cp /tmp/apt-fast/apt-fast /usr/bin
+  sudo curl --compressed -sLo /usr/bin/apt-fast https://github.com/ilikenwf/apt-fast/raw/master/apt-fast
+  sudo curl --compressed -sLo /etc/apt-fast.conf https://github.com/ilikenwf/apt-fast/raw/master/apt-fast.conf
   sudo chmod +x /usr/bin/apt-fast
-  sudo cp /tmp/apt-fast/apt-fast.conf /etc
 fi

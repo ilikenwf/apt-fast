@@ -250,7 +250,11 @@ get_uris(){
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
   #      package URIs.
-  apt-get -y --print-uris "$@" | egrep "^'(http(s|)|(s|)ftp)://" | \
+  case "$_APTMGR" in
+    apt|apt-get) uri_mgr=$_APTMGR;;
+    *) uri_mgr=apt-get;;
+  esac
+  "$uri_mgr" -y --print-uris "$@" | egrep "^'(http(s|)|(s|)ftp)://" | \
   while read pkg_uri_info
   do
     ## --print-uris format is:

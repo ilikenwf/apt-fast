@@ -1,0 +1,111 @@
+'\"
+.\" Man page for apt-fast
+.\"
+.\" Copyright: 2012, Dominique Lasserre <lasserre.d@gmail.com>
+.\"
+.\" You may distribute this file under the terms of the GNU General
+.\" Public License as published by the Free Software Foundation; either
+.\" version 3 of the License, or (at your option) any later version.
+.\"
+.TH "APT\-FAST" "8" "2012-10-11" "apt\-fast 1.8" "apt\-fast Manual"
+.SH "NAME"
+.LP
+apt\-fast \- shellscript wrapper for apt\-get or aptitude to speed up downloads
+.SH "SYNOPSIS"
+.LP
+\fBapt\-fast\fR [apt\-get options and arguments]
+.br
+\fBapt\-fast\fR [aptitude options and arguments]
+.br
+\fBapt\-fast\fR { { \fIinstall\fP | \fIupgrade\fP | \fIdist-upgrade\fP |
+\fIbuild-dep\fP | \fIdownload\fP | \fIsource\fP }
+[ \-y | \-\-yes | \-\-assume\-yes | \-\-assume\-no ] <package1> <package2> ... |
+\fIclean\fP }
+.SH "DESCRIPTION"
+.LP
+\fBapt\-fast\fR is a shellscript wrapper for apt\-get or aptitude that can
+drastically improve APT download times by downloading packages in parallel,
+with multiple connections per package.
+.br
+It uses \fBaria2c\fR(1) as default download accelerator.
+.LP
+For every command or option you can use either \fBapt\-get\fR(8) or
+\fBaptitude\fR(1) syntax, depending which package manager you have selected
+with \fB_APTMGR\fR configuration item. See \fBapt-fast.conf\fR(5) for detailed
+description of configuration items.
+.LP
+Commands listed here use download accelerator to retrieve new packages or
+influence \fBapt\-fast\fR in different ways. See documentation of selected
+package manager to get overview of all commands available.
+.TP
+\fBinstall\fR <\fIpackage1\fP> <\fIpackage2\fP> ...
+ Install one or more packages. The packages should be listed after the
+“install” command.
+.TP
+\fBupgrade\fR
+Upgrade currently installed packages to newest or pinned versions. Under no
+circumstances are currently installed packages removed, or packages not
+already installed retrieved and installed.
+.TP
+\fBdist\-upgrade\fR
+Same as \fBupgrade\fR command, but currently installed packages can be removed,
+or packages not already installed retrieved and installed.
+.TP
+\fBbuild\-dep\fR <\fIpackage1\fP> <\fIpackage2\fP> ...
+Install build dependencies of one or more packages. The packages should be
+listed after the “build\-dep” command.
+.TP
+\fBdownload\fR <\fIpackage1\fP> <\fIpackage2\fP> ...
+Download packages to current working directory. It depends on download helper
+if already downloaded packages are recognised.
+.TP
+\fBsource\fR <\fIpackage1\fP> <\fIpackage2\fP> ...
+Download source packages to current working directory and extract source
+archives. It depends on download helper if already downloaded source packages
+are recognised.
+.TP
+\fBclean\fR
+Clean package cache (configuration item \fBAPTCACHE\fR) and temporary download
+directory (configuration item \fBDLDIR\fR). Also remove temporary download list
+file (configuration item \fBDLLIST\fR).
+.SH "OPTIONS"
+Options listed here influence \fBapt\-fast\fR behavior. See
+documentation of selected package manager to get overview of all options
+available.
+.LP
+.TP
+\fB\-y\fR, \fB\-\-yes\fR, \fB\-\-assume\-yes\fR
+Automatic "yes" to prompts; assume "yes" as answer to all prompts and run
+non\-interactively. Sets \fBDOWNLOADBEFORE\fR configuration item to "true".
+.TP
+\fB\-\-assume\-no\fR
+Automatic "no" to all prompts. Unsets \fBDOWNLOADBEFORE\fR configuration
+item.
+.SH "FILES"
+.TP
+/etc/apt\-fast.conf
+Configuration file. See \fBapt\-fast.conf\fR(5) for detailed description.
+.TP
+/tmp/apt-fast.list
+Temporary download list file. Configuration item: \fBDLLIST\fR
+.TP
+/var/cache/apt/archives/apt-file/
+Temporary download location where download accelerator retrieves packages
+before \fBapt\-fast\fR moves them to package cache. Configuration item:
+\fBDLDIR\fR
+.SH "BUGS"
+Use Launchpad bug tracker to report package related bugs (please add debconf
+related information with 'debconf-show apt-fast'):
+.br
+https://bugs.launchpad.net/apt-fast/+filebug
+.LP
+To report bugs upstream use GitHub issue tracker:
+.br
+https://github.com/ilikenwf/apt-fast/issues/new
+.SH "SEE ALSO"
+.LP
+\fBapt-fast.conf\fR(5)
+.br
+\fBapt\-get\fR(8),
+\fBaptitude\fR(8),
+\fBaria2c\fR(1),

@@ -16,20 +16,34 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
 
 ## Table of Contents
 
-- [Setup/Install](#setupinstall)
+- [Installation](#installation)
   - [Ubuntu PPA](#ubuntu-ppa)
   - [Quick Install](#quick-install)
   - [Manual](#manual)
-  - [Multiple mirrors](#multiple-mirrors)
   - [Autocompletion](#autocompletion)
     - [Bash](#bash)
     - [Zsh](#zsh)
   - [Man page installation](#man-page-installation)
+- [Configuration](#configuration)
+  - [Package manager](#package-manager)
+  - [Confirmation dialog](#confirmation-dialog)
+  - [Multiple mirrors](#multiple-mirrors)
+  - [Maximum connections](#maximum-connections)
+  - [Maximum connections per server](#maximum-connections-per-server)
+  - [Maximum connections per file](#maximum-connections-per-file)
+  - [File split size](#file-split-size)
+  - [Piece selection algorithm](#piece-selection-algorithm)
+  - [Downloadmanager file](#downloadmanager-file)
+  - [Downloadmanager command](#downloadmanager-command)
+    - [Proxy](#proxy)
+  - [Download folder](#download-folder)
+  - [APT archives cache](#apt-archives-cache)
+  - [Colors](#colors)
 - [License](#license)
 - [Special thanks](#special-thanks)
 
-Setup/Install
--------------
+Installation
+------------
 
 ```sh
 sudo add-apt-repository ppa:apt-fast/stable
@@ -68,24 +82,6 @@ apt-get install aria2
 
 Then simply run apt-fast instead of apt-get or aptitude.
 
-### Multiple mirrors ###
-Adding multiple mirrors will further speed up downloads and distribute load, be sure to add mirrors near to your location.
-Official mirror lists:
-
-* Debian: http://www.debian.org/mirror/list
-* Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
-
-Then add them to whitespace and comma separated list in config file, e.g.:
-
-```sh
-MIRRORS=( 'http://ftp.debian.org/debian, http://ftp2.de.debian.org/debian, http://ftp.de.debian.org/debian, ftp://ftp.uni-kl.de/debian' )
-```
-
-```sh
-MIRRORS=( 'http://archive.ubuntu.com/ubuntu, http://de.archive.ubuntu.com/ubuntu, http://ftp.halifax.rwth-aachen.de/ubuntu, http://ftp.uni-kl.de/pub/linux/ubuntu, http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
-```
-
-*NOTE:* To use any mirrors you may have in sources.list or sources.list.d you will need to add them to the apt-fast.conf mirror list.
 
 ### Autocompletion ###
 #### Bash ####
@@ -112,6 +108,124 @@ gzip -f9 /usr/share/man/man8/apt-fast.8
 cp ./man/apt-fast.conf.5 /usr/share/man/man5
 gzip -f9 /usr/share/man/man5/apt-fast.conf.5
 ```
+
+Configuration
+-------------
+The apt-fast configuration file is located at: `/etc/apt-fast.conf`
+
+
+### Package manager ###
+```sh
+_APTMGR=apt-get
+```
+Change package manager used for installation. Supported are apt-get, aptitude, apt.
+
+
+### Confirmation dialog ###
+```sh
+DOWNLOADBEFORE=
+```
+To suppress apt-fast confirmation dialog and download packages directly set this to any value.
+
+
+### Multiple mirrors ###
+Adding multiple mirrors will further speed up downloads and distribute load, be sure to add mirrors near to your location.
+Official mirror lists:
+
+* Debian: http://www.debian.org/mirror/list
+* Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
+
+Then add them to whitespace and comma separated list in config file, e.g.:
+
+```sh
+MIRRORS=( 'http://ftp.debian.org/debian, http://ftp2.de.debian.org/debian, http://ftp.de.debian.org/debian, ftp://ftp.uni-kl.de/debian' )
+```
+
+```sh
+MIRRORS=( 'http://archive.ubuntu.com/ubuntu, http://de.archive.ubuntu.com/ubuntu, http://ftp.halifax.rwth-aachen.de/ubuntu, http://ftp.uni-kl.de/pub/linux/ubuntu, http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
+```
+
+*NOTE:* To use any mirrors you may have in sources.list or sources.list.d you will need to add them to the apt-fast.conf mirror list.
+
+
+### Maximum connections ###
+```sh
+_MAXNUM=5
+```
+Set to maximum number of connections aria2c uses.
+
+
+### Maximum connections per server ###
+```sh
+_MAXCONPERSRV=10
+```
+Set to maximum number of connections per server aria2c uses.
+
+
+### Maximum connections per file ###
+```sh
+_SPLITCON=8
+```
+Set to maximum number of connections per file aria2c uses.
+
+
+### File split size ###
+```sh
+_MINSPLITSZ=1M
+```
+Set to size of each split piece. Possible values: 1M-1024M
+
+
+### Piece selection algorithm ###
+```sh
+_PIECEALGO=default
+```
+Set to piece selection algorithm to use. Possible values: default, inorder, geom
+
+
+### Downloadmanager file ###
+```sh
+DLLIST='/tmp/apt-fast.list'
+```
+Location of aria2c input file, used to download the packages with options and checksums.
+
+
+### Downloadmanager command ###
+```sh
+_DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} -i ${DLLIST} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --connect-timeout=600 --timeout=600 -m0'
+```
+Change the download manager or add additional options to aria2c.
+
+#### Proxy ####
+```sh
+_DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --http-proxy=http://username:password@proxy_ip:proxy_port -i ${DLLIST}'
+```
+To use apt-fast behind a proxy, use `--http-proxy` option of aria2c and set username, password and proxy_port accordingly.
+
+
+### Download folder ###
+```sh
+DLDIR='/var/cache/apt/archives/apt-fast'
+```
+Directory where apt-fast downloads the packages.
+
+
+### APT archives cache ###
+```sh
+APTCACHE='/var/cache/apt/archives'
+```
+Directory where apt-get and aptitude download packages.
+
+
+### Colors ###
+```sh
+cGreen='\e[0;32m'
+cRed='\e[0;31m'
+cBlue='\e[0;34m'
+endColor='\e[0m' 
+```
+Terminal colors used for dialogs. Refer to [ANSI Escape sequences](http://ascii-table.com/ansi-escape-sequences.php) for a list of possible values. Disabled when not using terminal.
+
 
 License
 -------

@@ -17,16 +17,6 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
 Setup/Install
 -------------
 
-#### Ubuntu 14.04 and later versions
-
-```
-sudo add-apt-repository ppa:saiarcot895/myppa
-sudo apt-get update
-sudo apt-get -y install apt-fast
-```
-
-#### Ubuntu 11.04~13.10 (out of date)
-
 ```
 sudo add-apt-repository ppa:apt-fast/stable
 sudo apt-get update
@@ -36,8 +26,7 @@ sudo apt-get -y install apt-fast
 ### Ubuntu PPA ###
 You can use the Ubuntu PPA to get a graphical configuration file setup and automatic updates, for details see:
 
-* [ppa:saiarcot895/myppa(for Ubuntu 14.04 and later versions)](https://launchpad.net/~saiarcot895/+archive/ubuntu/myppa)
-* [ppa:apt-fast/stable(out of date, for Ubuntu 11.04~13.10)](https://code.launchpad.net/~apt-fast/+archive/stable)
+* [ppa:apt-fast/stable](https://code.launchpad.net/~apt-fast/+archive/stable)
 
 Some distros, such as PCLinuxOS include apt-fast in their repos.
 

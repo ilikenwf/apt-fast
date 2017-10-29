@@ -123,9 +123,9 @@ Change package manager used for installation. Supported are apt-get, aptitude, a
 
 ### Confirmation dialog ###
 ```sh
-DOWNLOADBEFORE=
+DOWNLOADBEFORE=true
 ```
-To suppress apt-fast confirmation dialog and download packages directly set this to any value.
+To suppress apt-fast confirmation dialog and download packages directly set this to any value. To ask for confirmation, leave empty. This options doesn't affect package manager confirmation.
 
 
 ### Multiple mirrors ###

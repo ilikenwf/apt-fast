@@ -82,7 +82,7 @@ TMP_APT_FAST_TIMEOUT="${APT_FAST_TIMEOUT-${TMP_RANDOM}}"
 
 # Check for proper privileges.
 # Call explicitly with environment variables to get them into root conext.
-if [ "$root" = 1 -a "$UID" != 0 ]; then
+if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
   exec sudo DEBUG="$DEBUG" \
             LCK_FILE="$TMP_LCK_FILE" \
             DOWNLOADBEFORE="$TMP_DOWNLOADBEFORE" \
@@ -112,16 +112,16 @@ LCK_FD=99
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
 _APTMGR=apt-get
-eval $(apt-config shell APTCACHE Dir::Cache::archives/d)
+eval "$(apt-config shell APTCACHE Dir::Cache::archives/d)"
 # Check if APT config option Dir::Cache::archives::apt-fast-partial is set.
-eval $(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)
+eval "$(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)"
 if [ -z "$apt_fast_partial" ]; then
-  eval $(apt-config -o Dir::Cache::archives::apt-fast-partial=apt-fast shell DLDIR Dir::Cache::archives::apt-fast-partial/d)
+  eval "$(apt-config -o Dir::Cache::archives::apt-fast-partial=apt-fast shell DLDIR Dir::Cache::archives::apt-fast-partial/d)"
 else
-  eval $(apt-config shell DLDIR Dir::Cache::archives::apt-fast-partial/d)
+  eval "$(apt-config shell DLDIR Dir::Cache::archives::apt-fast-partial/d)"
 fi
 # Currently not needed.
-eval $(apt-config shell LISTDIR Dir::State::lists/d)
+eval "$(apt-config shell LISTDIR Dir::State::lists/d)"
 DLLIST="/tmp/apt-fast.list"
 _MAXNUM=8
 _MAXCONPERSRV=10
@@ -231,7 +231,7 @@ get_mirrors(){
     # mirrors to (resmirror) list and break all loops.
     for mirror in ${mirrors[@]}; do
       # Real expension.
-      if [[ "$1" == "$mirror"*  ]]; then
+      if [[ "$1" == "$mirror"* ]]; then
         filepath=${1#${mirror}}
         # Build list for aria download list.
         list="${mirrors[@]}"
@@ -254,15 +254,15 @@ get_uris(){
     apt|apt-get) uri_mgr=$_APTMGR;;
     *) uri_mgr=apt-get;;
   esac
-  "$uri_mgr" -y --print-uris "$@" | egrep "^'(http(s|)|(s|)ftp)://" | \
-  while read pkg_uri_info
+  "$uri_mgr" -y --print-uris "$@" | grep -E "^'(http(s|)|(s|)ftp)://" | \
+  while read -r pkg_uri_info
   do
     ## --print-uris format is:
     # 'fileurl' filename filesize checksum_hint:filechecksum
-    uri=$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")
-    filename=$(echo "$pkg_uri_info" | cut -d' ' -f2)
-    filesize=$(echo "$pkg_uri_info" | cut -d' ' -f3)
-    checksum=$(echo "$pkg_uri_info" | cut -d' ' -f4 | cut -d':' -f2)
+    uri="$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")"
+    filename="$(echo "$pkg_uri_info" | cut -d' ' -f2)"
+    filesize="$(echo "$pkg_uri_info" | cut -d' ' -f3)"
+    checksum="$(echo "$pkg_uri_info" | cut -d' ' -f4 | cut -d':' -f2)"
     ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
     # plain aptitude do not decode it when download and install it. Therefore, we
     # will have ugly named packages at /var/cache/apt/archives but is the standard
@@ -279,17 +279,19 @@ get_uris(){
     # below code will fail resoundingly
     if echo "$pkg_uri_info" | grep -q -v 'MD5Sum'
     then
-      pkg_name=$(echo "$filename" | cut -d'_' -f1)
-      pkg_version=$(echo "$filename" | cut -d'_' -f2)
-      pkg_version=$(urldecode $pkg_version)
-      patch_md5=$(apt-cache show $pkg_name=$pkg_version | grep MD5sum | head -n 1)
-      checksum=$(echo $patch_md5 | cut -d' ' -f2)
+      pkg_name="$(echo "$filename" | cut -d'_' -f1)"
+      pkg_version="$(echo "$filename" | cut -d'_' -f2)"
+      pkg_version="$(urldecode "$pkg_version")"
+      patch_md5="$(apt-cache show "$pkg_name=$pkg_version" | grep MD5sum | head -n 1)"
+      checksum="$(echo "$patch_md5" | cut -d' ' -f2)"
     fi
 
-    echo "$(get_mirrors "$uri")" >> "$DLLIST"
-    #echo " dir=$DLDIR" >> "$DLLIST"
-    echo " checksum=md5=$checksum" >> "$DLLIST"
-    echo " out=$filename" >> "$DLLIST"
+    {
+      get_mirrors "$uri"
+      #echo " dir=$DLDIR"
+      echo " checksum=md5=$checksum"
+      echo " out=$filename"
+    } >> "$DLLIST"
   done
 
   #cat "$DLLIST"
@@ -302,14 +304,14 @@ _create_lock
 
 # Make sure aria2c (in general first parameter from _DOWNLOADER) is available.
 CMD="$(echo "$_DOWNLOADER" | sed 's/^\s*\([^ ]\+\).*$/\1/')"
-if [ ! $(command -v "$CMD") ]; then
+if [ ! "$(command -v "$CMD")" ]; then
   msg "Command not found: $CMD" "normal" "err"
   msg "You must configure $CONFFILE to use aria2c or another supported download manager" "normal" "err"
   exit 1
 fi
 
 # Make sure package manager is available.
-if [ ! $(command -v "$_APTMGR") ]; then
+if [ ! "$(command -v "$_APTMGR")" ]; then
   msg "\`$_APTMGR\` command not available." "warning"
   msg "You must configure $CONFFILE to use either apt-get or aptitude." "normal" "err"
   exit 1
@@ -339,13 +341,13 @@ if [ "$option" == "install" ]; then
 
   # Test /tmp/apt-fast.list file exists AND not zero bytes.
   # Then download all files from the list.
-  if [ $(cat "$DLLIST" | wc -l) -gt 0 ] && [ ! "$DOWNLOADBEFORE" ]; then
+  if [ "$(wc -l "$DLLIST")" -gt 0 ] && [ ! "$DOWNLOADBEFORE" ]; then
     cat "$DLLIST"
 
     echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
 
     while ((!updsys)); do
-      read -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg "\n Timed out." "warning"; exit 1; }
+      read -r -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg "\n Timed out." "warning"; exit 1; }
       case "$answer" in
         [JjYy])    result=1; updsys=1 ;;
         [Nn])      result=0; updsys=1 ;;
@@ -370,7 +372,7 @@ if [ "$option" == "install" ]; then
       cd "$DLDIR" &>/dev/null || exit 1
 
       eval "${_DOWNLOADER}" # execute downloadhelper command
-      if [ $(find "$DLDIR" -printf . | wc -c) -gt 1 ]; then
+      if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
         # Move all packages to the apt install directory by force to ensure
         # already existing debs which may be incomplete are replaced
         find -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
@@ -413,8 +415,6 @@ elif [ "$option" == "source" ]; then
 # Execute package manager directly if unknown options are passed.
 else
   "${_APTMGR}" "$@"
-
 fi
-
 
 # After error or all done remove our lockfile

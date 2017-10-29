@@ -346,9 +346,9 @@ if [ "$option" == "install" ]; then
     fi
   done
 
-  # Test /tmp/apt-fast.list file exists AND not zero bytes.
+  # Test /tmp/apt-fast.list file exists and not just the apt-fast comment line.
   # Then download all files from the list.
-  if [ "$(wc -l "$DLLIST")" -gt 0 ] && [ ! "$DOWNLOADBEFORE" ]; then
+  if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ] && [ ! "$DOWNLOADBEFORE" ]; then
     cat "$DLLIST"
 
     echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"

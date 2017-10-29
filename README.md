@@ -14,6 +14,20 @@ apt-fast 1.8
 ============
 apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically improve apt download times by downloading packages in parallel, with multiple connections per package.
 
+## Table of Contents
+
+- [Setup/Install](#setupinstall)
+  - [Ubuntu PPA](#ubuntu-ppa)
+  - [Quick Install](#quick-install)
+  - [Manual](#manual)
+  - [Multiple mirrors](#multiple-mirrors)
+  - [Autocompletion](#autocompletion)
+    - [Bash](#bash)
+    - [Zsh](#zsh)
+  - [Man page installation](#man-page-installation)
+- [License](#license)
+- [Special thanks](#special-thanks)
+
 Setup/Install
 -------------
 

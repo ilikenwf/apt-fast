@@ -123,7 +123,7 @@ fi
 # Currently not needed.
 eval "$(apt-config shell LISTDIR Dir::State::lists/d)"
 DLLIST="/tmp/apt-fast.list"
-_MAXNUM=8
+_MAXNUM=5
 _MAXCONPERSRV=10
 _SPLITCON=8
 _MINSPLITSZ="1M"

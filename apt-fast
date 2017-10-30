@@ -33,30 +33,26 @@ msg(){
 # Search for known options and decide if root privileges are needed.
 root=1  # default value: we need root privileges
 option=
-for arguments in $@; do
-  if [ "$arguments" == "upgrade" ] ||
-      [ "$arguments" == "full-upgrade" ] ||
-      [ "$arguments" == "install" ] ||
-      [ "$arguments" == "dist-upgrade" ] ||
-      [ "$arguments" == "build-dep" ]; then
-    option="install"
-    break
-  elif [ "$arguments" == "clean" ] ||
-      [ "$arguments" == "autoclean" ]; then
-    option="clean"
-    break
-  elif [ "$arguments" == "download" ]; then
-    option="download"
-    root=0
-    break
-  elif [ "$arguments" == "source" ]; then
-    option="source"
-    root=0
-    break
-  elif [ "$arguments" == "changelog" ]; then
-    root=0
-    break
-  fi
+for argument in $@; do
+  case "$argument" in
+    upgrade | full-upgrade | install | dist-upgrade | build-dep)
+      option="install"
+      ;;
+    clean | autoclean)
+      option="clean"
+      ;;
+    download)
+      option="download"
+      root=0
+      ;;
+    soure)
+      option="source"
+      root=0
+      ;;
+    changelog)
+      root=0
+      ;;
+  esac
 done
 
 # To handle priority of options correctly (environment over config file vars)
@@ -337,13 +333,10 @@ if [ "$option" == "install" ]; then
   #FIXME: Composed short options e.g. "-yV" are not recognised - we should use
   #      getopts for proper option passing.
   for option in $@; do
-    if [ "$option" == "-y" ] ||
-        [ "$option" == "--yes" ] ||
-        [ "$option" == "--assume-yes" ]; then
-      DOWNLOADBEFORE=true
-    elif [ "$option" == "--assume-no" ]; then
-      DOWNLOADBEFORE=
-    fi
+    case "$option" in
+      -y | --yes | --assume-yes)  DOWNLOADBEFORE=true ;;
+      --assume-no)                DOWNLOADBEFORE= ;;
+    esac
   done
 
   # Test /tmp/apt-fast.list file exists and not just the apt-fast comment line.

@@ -242,6 +242,23 @@ get_mirrors(){
 
 # Get the package URLs.
 get_uris(){
+  if [ ! -d "$(dirname "$DLLIST")" ]
+  then
+    mkdir -p -- "$(dirname "$DLLIST")"
+    if [ "$?" -ne 0 ]
+    then
+      msg "Could not create download file directory." "warning"
+      exit 1
+    fi
+  elif [ -f "$DLLIST" ]; then
+    rm -f -- "$DLLIST" 2>/dev/null && touch -- "$DLLIST" 2>/dev/null
+    if [ "$?" -ne 0 ]
+    then
+      msg "Unable to write to download file. Try restarting with root rights or clean first." "warning"
+      exit 1
+    fi
+  fi
+
   # Add header to overwrite file.
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
@@ -417,4 +434,16 @@ else
   "${_APTMGR}" "$@"
 fi
 
-# After error or all done remove our lockfile
+# Move download file away so missing permissions won't stop usage.
+mv -- "$DLLIST{,.old}" 2>/dev/null
+if [ "$?" -ne 0 ]
+then
+  rm -f -- "$DLLIST" 2>/dev/null
+  if [ "$?" -ne 0 ]
+  then
+    msg "Could not clean up download list file." "warning"
+    exit 1
+  fi
+fi
+
+# After error or all done remove our lockfile (done with EXIT trap)

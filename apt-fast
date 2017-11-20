@@ -347,13 +347,22 @@ if [ "$option" == "install" ]; then
   # Check if "assume yes" switch is enabled and if yes enable $DOWNLOADBEFORE.
   #TODO: Get real value over APT items APT::Get::Assume-Yes and
   #      APT::Get::Assume-No .
-  #FIXME: Composed short options e.g. "-yV" are not recognised - we should use
-  #      getopts for proper option passing.
-  for option in $@; do
-    case "$option" in
-      -y | --yes | --assume-yes)  DOWNLOADBEFORE=true ;;
-      --assume-no)                DOWNLOADBEFORE= ;;
-    esac
+  while true; do
+    while getopts ":y-:" optchar; do
+      case "${optchar}" in
+        -)
+          case "${OPTARG}" in
+            yes | assume-yes)  DOWNLOADBEFORE=true ;;
+            assume-no)         DOWNLOADBEFORE=     ;;
+          esac
+          ;;
+        y)
+          DOWNLOADBEFORE=true
+          ;;
+      esac
+    done
+    ((OPTIND++))
+    [ $OPTIND -gt $# ] && break
   done
 
   # Test /tmp/apt-fast.list file exists and not just the apt-fast comment line.

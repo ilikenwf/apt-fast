@@ -24,16 +24,16 @@ msg(){
   esac
 
   if [ -z "$3" ] && [ "$2" != "warning" ]; then
-    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}";
+    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}"
   else
-    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}"; >&2
+    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}" >&2
   fi
 }
 
 # Search for known options and decide if root privileges are needed.
 root=1  # default value: we need root privileges
 option=
-for argument in $@; do
+for argument in "$@"; do
   case "$argument" in
     upgrade | full-upgrade | install | dist-upgrade | build-dep)
       option="install"
@@ -195,7 +195,7 @@ _create_lock()
     eval "exec $LCK_FD>\"$LCK_FILE.lock\""
 
     trap "_remove_lock; exit" EXIT
-    trap "_remove_lock; exit 1;" INT KILL TERM
+    trap "_remove_lock; exit 1;" INT TERM
 
     flock -n $LCK_FD || { msg_already_running; exit 1; }
 }
@@ -217,20 +217,17 @@ urldecode()
 # Check if mirrors are available. And if so add all mirrors to download list.
 get_mirrors(){
   # Check all mirror lists.
-  for mirrorstr in ${MIRRORS[@]}; do
+  for mirrorstr in "${MIRRORS[@]}"; do
     # Build mirrors array from comma separated string.
-    mirrors=( $(echo "$mirrorstr" | sed "s/\([^,]\+\)\s*,\s*/\1 /g") )
-    # This does not the \s*,\s* trick, so we use sed instead to make it more
-    # robust.
-    #mirrors=( ${mirrorstr//,/ } )
+    IFS=", " read -r -a mirrors <<< "$mirrorstr"
     # Check for all mirrors if URI of $1 is from mirror. If so add all other
     # mirrors to (resmirror) list and break all loops.
-    for mirror in ${mirrors[@]}; do
+    for mirror in "${mirrors[@]}"; do
       # Real expension.
       if [[ "$1" == "$mirror"* ]]; then
         filepath=${1#${mirror}}
         # Build list for aria download list.
-        list="${mirrors[@]}"
+        list="${mirrors[*]}"
         echo -e "${list// /${filepath}\\t}$filepath\n"
         return 0
       fi
@@ -244,15 +241,13 @@ get_mirrors(){
 get_uris(){
   if [ ! -d "$(dirname "$DLLIST")" ]
   then
-    mkdir -p -- "$(dirname "$DLLIST")"
-    if [ "$?" -ne 0 ]
+    if ! mkdir -p -- "$(dirname "$DLLIST")"
     then
       msg "Could not create download file directory." "warning"
       exit 1
     fi
   elif [ -f "$DLLIST" ]; then
-    rm -f -- "$DLLIST" 2>/dev/null && touch -- "$DLLIST" 2>/dev/null
-    if [ "$?" -ne 0 ]
+    if ! rm -f -- "$DLLIST" 2>/dev/null && touch -- "$DLLIST" 2>/dev/null
     then
       msg "Unable to write to download file. Try restarting with root rights or clean first." "warning"
       exit 1
@@ -401,9 +396,9 @@ if [ "$option" == "install" ]; then
       if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
         # Move all packages to the apt install directory by force to ensure
         # already existing debs which may be incomplete are replaced
-        find -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
+        find . -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
       fi
-      cd - &>/dev/null
+      cd - &>/dev/null || msg "Failed to change back directory" "warning"
     fi
   else
     exit 1
@@ -444,11 +439,10 @@ else
 fi
 
 # Move download file away so missing permissions won't stop usage.
-mv -- "$DLLIST{,.old}" 2>/dev/null
-if [ "$?" -ne 0 ]
+
+if ! mv -- "$DLLIST{,.old}" 2>/dev/null
 then
-  rm -f -- "$DLLIST" 2>/dev/null
-  if [ "$?" -ne 0 ]
+  if ! rm -f -- "$DLLIST" 2>/dev/null
   then
     msg "Could not clean up download list file." "warning"
     exit 1

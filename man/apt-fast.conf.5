@@ -7,7 +7,7 @@
 .\" Public License as published by the Free Software Foundation; either
 .\" version 3 of the License, or (at your option) any later version.
 .\"
-.TH "APT\-FAST.CONF" "5" "2012-10-11" "apt\-fast 1.8" "apt\-fast Manual"
+.TH "APT\-FAST.CONF" "5" "2017-11-20" "apt\-fast 1.8" "apt\-fast Manual"
 .SH "NAME"
 .LP
 apt\-fast.conf \- configuration file for \fBapt\-fast\fR(5)
@@ -69,6 +69,29 @@ number of parallel connections to retrieve packages.
 .br
 Default: 5
 .TP
+\fB_MAXCONPERSRV\fR
+Sets the maximum number of connections to same download server.
+.br
+Default: 10
+.TP
+\fB_SPLITCON\fR
+The maximum simultanious downloads on the same file.
+.br
+Default: 8
+.TP
+\fB_MINSPLITSZ\fR
+Set this to the minimum file size when to split a file to download it over
+multiple connections. Values from 1M to 1024M are supported. Refer to
+\fBaria2c\fR(1) for more details.
+.br
+Default: 1M
+.TP
+\fB_PIECEALGO\fR
+Specifies the file split selection algorithm used by aria2. Possible values
+are: default, inorder, geom
+.br
+Default: default
+.TP
 \fBDLLIST\fR
 Set location of temporary download list file where APT exports URIs of
 downloadable packages.
@@ -98,7 +121,7 @@ Default: 'aria2c \-c \-j ${_MAXNUM} \-i ${DLLIST} \-\-connect\-timeout=600 \-\-t
 \fBDLDIR\fR
 Directory where to download packages with download helper to.
 .br
-Default: '/var/cache/apt/archives/apt-fast'
+Default: '/var/cache/apt/apt-fast'
 .TP
 \fBAPTCACHE\fR
 APT package cache directory. Set it to APT configuration items Dir::Cache and
@@ -139,7 +162,7 @@ Configuration file.
 /tmp/apt-fast.list
 Temporary download list file. Configuration item: \fBDLLIST\fR
 .TP
-/var/cache/apt/archives/apt-file/
+/var/cache/apt/apt-file/
 Temporary download location where download accelerator retrieves packages
 before \fBapt\-fast\fR(8) moves them to package cache. Configuration item:
 \fBDLDIR\fR
@@ -149,4 +172,4 @@ before \fBapt\-fast\fR(8) moves them to package cache. Configuration item:
 .br
 \fBapt\-get\fR(8),
 \fBaptitude\fR(8),
-\fBaria2c\fR(1),
+\fBaria2c\fR(1)

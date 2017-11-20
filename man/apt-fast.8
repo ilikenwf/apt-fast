@@ -7,7 +7,7 @@
 .\" Public License as published by the Free Software Foundation; either
 .\" version 3 of the License, or (at your option) any later version.
 .\"
-.TH "APT\-FAST" "8" "2012-10-11" "apt\-fast 1.8" "apt\-fast Manual"
+.TH "APT\-FAST" "8" "2017-11-20" "apt\-fast 1.8" "apt\-fast Manual"
 .SH "NAME"
 .LP
 apt\-fast \- shellscript wrapper for apt\-get or aptitude to speed up downloads
@@ -18,7 +18,7 @@ apt\-fast \- shellscript wrapper for apt\-get or aptitude to speed up downloads
 \fBapt\-fast\fR [aptitude options and arguments]
 .br
 \fBapt\-fast\fR { { \fIinstall\fP | \fIupgrade\fP | \fIdist-upgrade\fP |
-\fIbuild-dep\fP | \fIdownload\fP | \fIsource\fP }
+\fIfull-upgrade\fP | \fIbuild-dep\fP | \fIdownload\fP | \fIsource\fP }
 [ \-y | \-\-yes | \-\-assume\-yes | \-\-assume\-no ] <package1> <package2> ... |
 \fIclean\fP }
 .SH "DESCRIPTION"
@@ -50,6 +50,9 @@ already installed retrieved and installed.
 \fBdist\-upgrade\fR
 Same as \fBupgrade\fR command, but currently installed packages can be removed,
 or packages not already installed retrieved and installed.
+.TP
+\fBfull\-upgrade\fR
+Same as \fBdist\-upgrade\fR command.
 .TP
 \fBbuild\-dep\fR <\fIpackage1\fP> <\fIpackage2\fP> ...
 Install build dependencies of one or more packages. The packages should be
@@ -89,7 +92,7 @@ Configuration file. See \fBapt\-fast.conf\fR(5) for detailed description.
 /tmp/apt-fast.list
 Temporary download list file. Configuration item: \fBDLLIST\fR
 .TP
-/var/cache/apt/archives/apt-file/
+/var/cache/apt/apt-file/
 Temporary download location where download accelerator retrieves packages
 before \fBapt\-fast\fR moves them to package cache. Configuration item:
 \fBDLDIR\fR

@@ -116,7 +116,7 @@ MIRROR1\\tMIRROR2\\tMIRROR3...
 etc.
 
 .br
-Default: 'aria2c \-c \-j ${_MAXNUM} \-i ${DLLIST} \-\-connect\-timeout=600 \-\-timeout=600 \-m0'
+Default: 'aria2c \-\-no-conf \-c \-j ${_MAXNUM} \-x ${_MAXCONPERSRV} \-s ${_SPLITCON} \-i ${DLLIST} \-\-min\-split\-size=${_MINSPLITSZ} \-\-stream\-piece\-selector=${_PIECEALGO} \-\-connect\-timeout=600 \-\-timeout=600 \-m0'
 .TP
 \fBDLDIR\fR
 Directory where to download packages with download helper to.

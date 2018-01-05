@@ -283,7 +283,9 @@ get_uris(){
     uri="$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")"
     filename="$(echo "$pkg_uri_info" | cut -d' ' -f2)"
     filesize="$(echo "$pkg_uri_info" | cut -d' ' -f3)"
-    checksum="$(echo "$pkg_uri_info" | cut -d' ' -f4 | cut -d':' -f2)"
+    checksum_string="$(echo "$pkg_uri_info" | cut -d' ' -f4)"
+    hash_algo="$(echo "$checksum_string" | cut -d':' -f1)"
+    checksum="$(echo "$checksum_string" | cut -d':' -f2)"
 
     filename_decoded="$(urldecode "$filename")"
     DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$(echo "$filename_decoded" | cut -d'_' -f1)"
@@ -298,26 +300,66 @@ get_uris(){
     # But package version must be decoded, otherways package=version calls will
     # not work.
 
-    ## Aria only supports md5 and sha1. If --print-uris return other than
-    # MD5, we need to replace it (by now behavior is return strongest).
-    # Using apt-cache show package=version to ensure recover single and
-    # correct package version.
-    # Warning: assuming that package naming uses '_' as field separator.
-    # Therefore, this code expects package-name_version_arch.deb Otherways
-    # below code will fail resoundingly
-    if echo "$pkg_uri_info" | grep -q -v 'MD5Sum'
-    then
-      pkg_name="$(echo "$filename" | cut -d'_' -f1)"
-      pkg_version="$(echo "$filename" | cut -d'_' -f2)"
-      pkg_version="$(urldecode "$pkg_version")"
-      patch_md5="$(apt-cache show "$pkg_name=$pkg_version" | grep MD5sum | head -n 1)"
-      checksum="$(echo "$patch_md5" | cut -d' ' -f2)"
+    if [ -n "$HASH_SUPPORTED" ]; then
+      case "$hash_algo" in
+        SHA512) [ -z "$SHA512_SUPPORTED" ] && hash_algo= ;;
+        SHA256) [ -z "$SHA256_SUPPORTED" ] && hash_algo= ;;
+        SHA1)   [ -z "$SHA1_SUPPORTED" ]   && hash_algo= ;;
+        MD5Sum)
+          if [ -z "$MD5sum_SUPPORTED" ]; then
+            hash_algo=
+          else
+            hash_algo=md5
+          fi
+          ;;
+        *)
+          hash_algo=
+      esac
+
+      # Using apt-cache show package=version to ensure recover single and
+      # correct package version.
+      # Warning: assuming that package naming uses '_' as field separator.
+      # Therefore, this code expects package-name_version_arch.deb Otherways
+      # below code will fail resoundingly
+      if [ -z "$hash_algo" ]; then
+        pkg_name="$(echo "$filename" | cut -d'_' -f1)"
+        pkg_version="$(echo "$filename" | cut -d'_' -f2)"
+        pkg_version="$(urldecode "$pkg_version")"
+        package_info="$(apt-cache show "$pkg_name=$pkg_version")"
+
+        patch_checksum=
+        if [ -n "$SHA512_SUPPORTED" ]; then
+          patch_checksum="$(echo "$package_info" | grep SHA512 | head -n 1)"
+          [ -n "$patch_checksum" ] && hash_algo="sha-512"
+        fi
+        if [ -z "$patch_checksum" ] && [ -n "$SHA256_SUPPORTED" ]; then
+          patch_checksum="$(echo "$package_info" | grep SHA256 | head -n 1)"
+          [ -n "$patch_checksum" ] && hash_algo="sha-256"
+        fi
+        if [ -z "$patch_checksum" ] && [ -n "$SHA1_SUPPORTED" ]; then
+          patch_checksum="$(echo "$package_info" | grep SHA1 | head -n 1)"
+          [ -n "$patch_checksum" ] && hash_algo="sha-1"
+        fi
+        if [ -z "$patch_checksum" ] && [ -n "$MD5sum_SUPPORTED" ]; then
+          patch_checksum="$(echo "$package_info" | grep MD5sum | head -n 1)"
+          [ -n "$patch_checksum" ] && hash_algo="md5"
+        fi
+
+        if [ -n "$patch_checksum" ]; then
+          checksum="$(echo "$patch_checksum" | cut -d' ' -f2)"
+        else
+          msg "Couldn't get supported checksum for $pkg_name ($pkg_version)." "warning" "warning"
+          REMOVE_WORKING_MESSAGE=
+        fi
+      fi
     fi
 
     {
       get_mirrors "$uri"
       #echo " dir=$DLDIR"
-      echo " checksum=md5=$checksum"
+      if [ -n "$hash_algo" ]; then
+        echo " checksum=$hash_algo=$checksum"
+      fi
       echo " out=$filename"
     } >> "$DLLIST"
   done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")"
@@ -345,10 +387,31 @@ if [ ! "$(command -v "$_APTMGR")" ]; then
   exit 1
 fi
 
+# Set supported hash algorithms by aria2c (and also by Debian repository).
+SHA512_SUPPORTED=
+SHA256_SUPPORTED=
+SHA1_SUPPORTED=
+MD5sum_SUPPORTED=
+HASH_SUPPORTED=
+if [ "$CMD" == "aria2c" ]; then
+  for supported_hash in $(aria2c -v | sed '/^Hash Algorithms:/!d; s/\(^Hash Algorithms: \|,\)\+//g'); do
+    case "$supported_hash" in
+      sha-512) SHA512_SUPPORTED=y; HASH_SUPPORTED=y ;;
+      sha-256) SHA256_SUPPORTED=y; HASH_SUPPORTED=y ;;
+      sha-1)   SHA1_SUPPORTED=y;   HASH_SUPPORTED=y ;;
+      md5)     MD5sum_SUPPORTED=y; HASH_SUPPORTED=y ;;
+    esac
+  done
+  if [ -z "$HASH_SUPPORTED" ]; then
+    msg "Couldn't find supported checksum algorithm from aria2c. Checksums disabled." "warning" "warning"
+  fi
+fi
+
 
 # Run actions.
 if [ "$option" == "install" ]; then
   msg "\n Working... this may take a while." "normal"
+  REMOVE_WORKING_MESSAGE=y
 
   get_uris "$@"
 
@@ -379,7 +442,7 @@ if [ "$option" == "install" ]; then
     if [ -n "$VERBOSE_OUTPUT" ]; then
       cat "$DLLIST"
     else
-      tput cuu 2 && tput el
+      [ -n "$REMOVE_WORKING_MESSAGE" ] && tput cuu 2 && tput el
       DISPLAY_SORT_OPTIONS=(-k 1,1)
       # Sort output after package download size (decreasing):
       #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)

@@ -379,6 +379,7 @@ if [ "$option" == "install" ]; then
     if [ -n "$VERBOSE_OUTPUT" ]; then
       cat "$DLLIST"
     else
+      tput cuu 2 && tput el
       DISPLAY_SORT_OPTIONS=(-k 1,1)
       # Sort output after package download size (decreasing):
       #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)

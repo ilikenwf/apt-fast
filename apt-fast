@@ -75,6 +75,7 @@ TMP__MINSPLITSZ=${MINSPLITSZ-${TMP_RANDOM}}
 TMP__PIECEALGO=${PIECEALGO-${TMP_RANDOM}}
 TMP_aptfast_prefix="${aptfast_prefix-${TMP_RANDOM}}"
 TMP_APT_FAST_TIMEOUT="${APT_FAST_TIMEOUT-${TMP_RANDOM}}"
+TMP_VERBOSE_OUTPUT="${VERBOSE_OUTPUT-${TMP_RANDOM}}"
 
 # Check for proper privileges.
 # Call explicitly with environment variables to get them into root conext.
@@ -93,7 +94,9 @@ if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
             _MINSPLITSZ="$TMP__MINSPLITSZ" \
             _PIECEALGO="$TMP__PIECEALGO" \
             aptfast_prefix="$TMP_aptfast_prefix" \
-            APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT" "$0" "$@"
+            APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT" \
+            VERBOSE_OUTPUT="$TMP_VERBOSE_OUTPUT" \
+            "$0" "$@"
 fi
 
 
@@ -163,6 +166,7 @@ fi
 [ "$TMP__PIECEALGO" = "$TMP_RANDOM" ] || _PIECEALGO="$TMP__PIECEALGO"
 [ "$TMP_aptfast_prefix" = "$TMP_RANDOM" ] || aptfast_prefix="$TMP_aptfast_prefix"
 [ "$TMP_APT_FAST_TIMEOUT" = "$TMP_RANDOM" ] || APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT"
+[ "$TMP_VERBOSE_OUTPUT" = "$TMP_RANDOM" ] || VERBOSE_OUTPUT="$TMP_VERBOSE_OUTPUT"
 
 
 # Disable colors if not executed in terminal.
@@ -237,6 +241,9 @@ get_mirrors(){
   echo "$1"
 }
 
+# Globals to save package name, version, size and overall size.
+DOWNLOAD_DISPLAY=
+DOWNLOAD_SIZE=0
 # Get the package URLs.
 get_uris(){
   if [ ! -d "$(dirname "$DLLIST")" ]
@@ -269,7 +276,6 @@ get_uris(){
     msg "Package manager quit with exit code." "warning"
     exit "$uris_full_ret"
   fi
-  echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://" | \
   while read -r pkg_uri_info
   do
     ## --print-uris format is:
@@ -278,6 +284,13 @@ get_uris(){
     filename="$(echo "$pkg_uri_info" | cut -d' ' -f2)"
     filesize="$(echo "$pkg_uri_info" | cut -d' ' -f3)"
     checksum="$(echo "$pkg_uri_info" | cut -d' ' -f4 | cut -d':' -f2)"
+
+    filename_decoded="$(urldecode "$filename")"
+    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$(echo "$filename_decoded" | cut -d'_' -f1)"
+    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY} $(echo "$filename_decoded" | cut -d'_' -f2)"
+    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$(echo "$filesize" | numfmt --to=iec-i --suffix=B --padding=8)\n"
+    DOWNLOAD_SIZE=$((DOWNLOAD_SIZE + filesize))
+
     ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
     # plain aptitude do not decode it when download and install it. Therefore, we
     # will have ugly named packages at /var/cache/apt/archives but is the standard
@@ -307,7 +320,7 @@ get_uris(){
       echo " checksum=md5=$checksum"
       echo " out=$filename"
     } >> "$DLLIST"
-  done
+  done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")"
 
   #cat "$DLLIST"
   #LCK_RM
@@ -363,7 +376,20 @@ if [ "$option" == "install" ]; then
   # Test /tmp/apt-fast.list file exists and not just the apt-fast comment line.
   # Then download all files from the list.
   if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ] && [ ! "$DOWNLOADBEFORE" ]; then
-    cat "$DLLIST"
+    if [ -n "$VERBOSE_OUTPUT" ]; then
+      cat "$DLLIST"
+    else
+      DISPLAY_SORT_OPTIONS=(-k 1,1)
+      # Sort output after package download size (decreasing):
+      #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
+      while read -r line; do
+          pkg="$(echo "$line" | cut -d' ' -f1)"
+          ver="$(echo "$line" | cut -d' ' -f2)"
+          size="$(echo "$line" | sed 's/[^ ]\+ [^ ]\+[ ]\+//')"
+          printf '%-40s %-20s %10s\n' "$pkg" "$ver" "$size"
+      done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
+    fi
+    echo -e "\nDownload size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B --padding=7)\n"
 
     echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
 

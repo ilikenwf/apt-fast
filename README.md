@@ -38,6 +38,7 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
     - [Proxy](#proxy)
   - [Download folder](#download-folder)
   - [APT archives cache](#apt-archives-cache)
+  - [Verbose output](#verbose-output)
   - [Colors](#colors)
 - [License](#license)
 - [Special thanks](#special-thanks)
@@ -217,6 +218,13 @@ Directory where apt-fast downloads the packages.
 APTCACHE='/var/cache/apt/archives'
 ```
 Directory where apt-get and aptitude download packages.
+
+
+### Verbose output ###
+```sh
+VERBOSE_OUTPUT=y
+```
+Show aria2 download file instead of package listing before download confirmation. Unset to show package listing.
 
 
 ### Colors ###

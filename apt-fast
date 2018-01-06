@@ -145,6 +145,12 @@ endColor='\e[0m'
 # Value is in seconds.
 APT_FAST_TIMEOUT=60
 
+# Ask for download confirmation if unset
+DOWNLOADBEFORE=
+
+# Formatted package list in download confirmation if unset
+VERBOSE_OUTPUT=
+
 # Download command.
 _DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} -i ${DLLIST} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --connect-timeout=600 --timeout=600 -m0'
 

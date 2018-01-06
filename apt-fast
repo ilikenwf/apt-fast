@@ -17,16 +17,19 @@
 # Message types are 'normal', 'hint' or 'warning'. Warnings and messages with a
 # third argument are piped to stderr.
 msg(){
+  option=()
   case "$2" in
     normal) beginColor="$cGreen";;
     hint) beginColor="$cBlue";;
     warning) beginColor="$cRed";;
+    question) beginColor="$cRed"; option=(-n);;
+    *) beginColor= ;;
   esac
 
   if [ -z "$3" ] && [ "$2" != "warning" ]; then
-    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}"
+    echo -e "${option[@]}" "${aptfast_prefix}${beginColor}$1${endColor}"
   else
-    echo -e "${aptfast_prefix} ${beginColor}$1${endColor}" >&2
+    echo -e "${option[@]}" "${aptfast_prefix}${beginColor}$1${endColor}" >&2
   fi
 }
 
@@ -130,6 +133,7 @@ _PIECEALGO="default"
 
 # Prefix in front of apt-fast output:
 aptfast_prefix=
+# aptfast_prefix="$(date '+%b %_d %T.%N') apt-fast: "
 
 # Set color variables.
 cGreen='\e[0;32m'
@@ -278,6 +282,7 @@ get_uris(){
   fi
   while read -r pkg_uri_info
   do
+    [ -z "$pkg_uri_info" ] && continue
     ## --print-uris format is:
     # 'fileurl' filename filesize checksum_hint:filechecksum
     uri="$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")"
@@ -348,7 +353,7 @@ get_uris(){
         if [ -n "$patch_checksum" ]; then
           checksum="$(echo "$patch_checksum" | cut -d' ' -f2)"
         else
-          msg "Couldn't get supported checksum for $pkg_name ($pkg_version)." "warning" "warning"
+          msg "Couldn't get supported checksum for $pkg_name ($pkg_version)." "warning"
           REMOVE_WORKING_MESSAGE=
         fi
       fi
@@ -403,14 +408,15 @@ if [ "$CMD" == "aria2c" ]; then
     esac
   done
   if [ -z "$HASH_SUPPORTED" ]; then
-    msg "Couldn't find supported checksum algorithm from aria2c. Checksums disabled." "warning" "warning"
+    msg "Couldn't find supported checksum algorithm from aria2c. Checksums disabled." "warning"
   fi
 fi
 
 
 # Run actions.
 if [ "$option" == "install" ]; then
-  msg "\n Working... this may take a while." "normal"
+  msg
+  msg "Working... this may take a while." "normal"
   REMOVE_WORKING_MESSAGE=y
 
   get_uris "$@"
@@ -436,29 +442,30 @@ if [ "$option" == "install" ]; then
     [ $OPTIND -gt $# ] && break
   done
 
+  [ -t 1 ] && [ -n "$REMOVE_WORKING_MESSAGE" ] && tput cuu 1 && tput el && tput cuu 1
   # Test /tmp/apt-fast.list file exists and not just the apt-fast comment line.
   # Then download all files from the list.
   if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ] && [ ! "$DOWNLOADBEFORE" ]; then
     if [ -n "$VERBOSE_OUTPUT" ]; then
       cat "$DLLIST"
     else
-      [ -n "$REMOVE_WORKING_MESSAGE" ] && tput cuu 2 && tput el
       DISPLAY_SORT_OPTIONS=(-k 1,1)
       # Sort output after package download size (decreasing):
       #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
       while read -r line; do
+          [ -z "$line" ] && continue
           pkg="$(echo "$line" | cut -d' ' -f1)"
           ver="$(echo "$line" | cut -d' ' -f2)"
           size="$(echo "$line" | cut -d' ' -f3)"
-          printf '%-40s %-20s %10s\n' "$pkg" "$ver" "$size"
+          printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
       done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
     fi
-    echo -e "\nDownload size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)\n"
-
-    echo -ne "${cRed} If you want to download the packages on your system press Y else n to abort. [Y/n]:  ${endColor}"
+    msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)" "normal"
+    msg
+    msg "Do you want to download the packages? [Y/n] " "question"
 
     while ((!updsys)); do
-      read -r -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg "\n Timed out." "warning"; exit 1; }
+      read -r -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg; msg "Timed out." "warning"; exit 1; }
       case "$answer" in
         [JjYy])    result=1; updsys=1 ;;
         [Nn])      result=0; updsys=1 ;;
@@ -470,28 +477,31 @@ if [ "$option" == "install" ]; then
     result=1
   fi
 
-  echo
+  if ((DOWNLOAD_SIZE)); then
+    msg
+    # Continue if answer was right or DOWNLOADBEFORE is enabled.
+    if ((result)); then
+      if [ -s "$DLLIST" ]; then
+        # Test if apt-fast directory is present where we put packages.
+        if [ ! -d "$DLDIR" ]; then
+          mkdir -p -- "$DLDIR"
+        fi
 
-  # Continue if answer was right or DOWNLOADBEFORE is enabled.
-  if ((result)); then
-    if [ -s "$DLLIST" ]; then
-      # Test if apt-fast directory is present where we put packages.
-      if [ ! -d "$DLDIR" ]; then
-        mkdir -p -- "$DLDIR"
+        cd "$DLDIR" &>/dev/null || exit 1
+
+        eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/" # execute downloadhelper command
+        if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
+          # Move all packages to the apt install directory by force to ensure
+          # already existing debs which may be incomplete are replaced
+          find . -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
+        fi
+        cd - &>/dev/null || msg "Failed to change back directory" "warning"
       fi
-
-      cd "$DLDIR" &>/dev/null || exit 1
-
-      eval "${_DOWNLOADER}" # execute downloadhelper command
-      if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
-        # Move all packages to the apt install directory by force to ensure
-        # already existing debs which may be incomplete are replaced
-        find . -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
-      fi
-      cd - &>/dev/null || msg "Failed to change back directory" "warning"
+    else
+      exit 1
     fi
   else
-    exit 1
+    [ -t 1 ] && tput el
   fi
 
   "${_APTMGR}" "$@"
@@ -505,12 +515,14 @@ elif [ "$option" == "clean" ]; then
 
 elif [ "$option" == "download" ]; then
   get_uris "$@"
-  eval "${_DOWNLOADER}"
+  eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
 
 elif [ "$option" == "source" ]; then
-  msg "\n Working... this may take a while.\n" "normal"
+  msg
+  msg "Working... this may take a while." "normal"
+  msg
   get_uris "$@"
-  eval "${_DOWNLOADER}"
+  eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also
   # more hardened (e.g. some options like --compile are available).

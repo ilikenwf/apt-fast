@@ -418,6 +418,34 @@ if [ "$CMD" == "aria2c" ]; then
   fi
 fi
 
+# Check if "assume yes" switch is enabled and if yes enable $DOWNLOADBEFORE.
+# Also check if "download only" switch is enabled.
+#TODO: Get real value over APT items APT::Get::Assume-Yes and
+#      APT::Get::Assume-No .
+#      Respectively Aptitude::CmdLine::Download-Only and APT::Get::Download-Only.
+DOWNLOAD_ONLY=
+while true; do
+  while getopts ":dy-:" optchar; do
+    case "${optchar}" in
+      -)
+        case "${OPTARG}" in
+          yes | assume-yes)  DOWNLOADBEFORE=true ;;
+          assume-no)         DOWNLOADBEFORE=     ;;
+          download-only)     DOWNLOAD_ONLY=true  ;;
+        esac
+        ;;
+      y)
+        DOWNLOADBEFORE=true
+        ;;
+      d)
+        DOWNLOAD_ONLY=true
+        ;;
+    esac
+  done
+  ((OPTIND++))
+  [ $OPTIND -gt $# ] && break
+done
+
 
 # Run actions.
 if [ "$option" == "install" ]; then
@@ -426,27 +454,6 @@ if [ "$option" == "install" ]; then
   REMOVE_WORKING_MESSAGE=y
 
   get_uris "$@"
-
-  # Check if "assume yes" switch is enabled and if yes enable $DOWNLOADBEFORE.
-  #TODO: Get real value over APT items APT::Get::Assume-Yes and
-  #      APT::Get::Assume-No .
-  while true; do
-    while getopts ":y-:" optchar; do
-      case "${optchar}" in
-        -)
-          case "${OPTARG}" in
-            yes | assume-yes)  DOWNLOADBEFORE=true ;;
-            assume-no)         DOWNLOADBEFORE=     ;;
-          esac
-          ;;
-        y)
-          DOWNLOADBEFORE=true
-          ;;
-      esac
-    done
-    ((OPTIND++))
-    [ $OPTIND -gt $# ] && break
-  done
 
   [ -t 1 ] && [ -n "$REMOVE_WORKING_MESSAGE" ] && tput cuu 1 && tput el && tput cuu 1
   # Test /tmp/apt-fast.list file exists and not just the apt-fast comment line.
@@ -510,7 +517,9 @@ if [ "$option" == "install" ]; then
     [ -t 1 ] && tput el
   fi
 
-  "${_APTMGR}" "$@"
+  if [ -z "$DOWNLOAD_ONLY" ] || [ "$_APTMGR" == "aptitude" ]; then
+    "${_APTMGR}" "$@"
+  fi
 
 
 elif [ "$option" == "clean" ]; then
@@ -522,6 +531,9 @@ elif [ "$option" == "clean" ]; then
 elif [ "$option" == "download" ]; then
   get_uris "$@"
   eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
+  if [ "$_APTMGR" == "aptitude" ]; then
+    "${_APTMGR}" "$@"
+  fi
 
 elif [ "$option" == "source" ]; then
   msg

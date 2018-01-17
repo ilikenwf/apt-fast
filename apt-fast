@@ -17,19 +17,19 @@
 # Message types are 'normal', 'hint' or 'warning'. Warnings and messages with a
 # third argument are piped to stderr.
 msg(){
-  option=()
+  msg_options=()
   case "$2" in
     normal) beginColor="$cGreen";;
     hint) beginColor="$cBlue";;
     warning) beginColor="$cRed";;
-    question) beginColor="$cRed"; option=(-n);;
+    question) beginColor="$cRed"; msg_options=(-n);;
     *) beginColor= ;;
   esac
 
   if [ -z "$3" ] && [ "$2" != "warning" ]; then
-    echo -e "${option[@]}" "${aptfast_prefix}${beginColor}$1${endColor}"
+    echo -e "${msg_options[@]}" "${aptfast_prefix}${beginColor}$1${endColor}"
   else
-    echo -e "${option[@]}" "${aptfast_prefix}${beginColor}$1${endColor}" >&2
+    echo -e "${msg_options[@]}" "${aptfast_prefix}${beginColor}$1${endColor}" >&2
   fi
 }
 

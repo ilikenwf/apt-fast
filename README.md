@@ -1,16 +1,16 @@
 <!---
-apt-fast v1.8
+apt-fast v1.9
 Use this just like aptitude or apt-get for faster package downloading.
 
 Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
-Improvements, maintenance, revisions - 2012 Dominique Lasserre
+Improvements, maintenance, revisions - 2012, 2017-2018 Dominique Lasserre
 
 You may distribute this file under the terms of the GNU General
 Public License as published by the Free Software Foundation; either
 version 3 of the License, or (at your option) any later version.
 -->
 
-apt-fast 1.8
+apt-fast 1.9
 ============
 apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically improve apt download times by downloading packages in parallel, with multiple connections per package.
 
@@ -241,8 +241,8 @@ License
 -------
 Consider apt-fast and all of its derivatives licensed under the GNU GPLv3+.
 
-Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
-Improvements, maintenance, revisions - 2012 Dominique Lasserre
+Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com\\
+Improvements, maintenance, revisions - 2012, 2017-2018 Dominique Lasserre
 
 
 Special thanks

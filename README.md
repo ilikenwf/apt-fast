@@ -241,7 +241,8 @@ License
 -------
 Consider apt-fast and all of its derivatives licensed under the GNU GPLv3+.
 
-Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com\\
+Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
+
 Improvements, maintenance, revisions - 2012, 2017-2018 Dominique Lasserre
 
 

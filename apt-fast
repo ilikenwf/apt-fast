@@ -79,6 +79,9 @@ TMP__PIECEALGO=${PIECEALGO-${TMP_RANDOM}}
 TMP_aptfast_prefix="${aptfast_prefix-${TMP_RANDOM}}"
 TMP_APT_FAST_TIMEOUT="${APT_FAST_TIMEOUT-${TMP_RANDOM}}"
 TMP_VERBOSE_OUTPUT="${VERBOSE_OUTPUT-${TMP_RANDOM}}"
+TMP_ftp_proxy="${ftp_proxy-${TMP_RANDOM}}"
+TMP_http_proxy="${http_proxy-${TMP_RANDOM}}"
+TMP_https_proxy="${https_proxy-${TMP_RANDOM}}"
 
 # Check for proper privileges.
 # Call explicitly with environment variables to get them into root conext.
@@ -99,6 +102,9 @@ if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
             aptfast_prefix="$TMP_aptfast_prefix" \
             APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT" \
             VERBOSE_OUTPUT="$TMP_VERBOSE_OUTPUT" \
+            ftp_proxy="$TMP_ftp_proxy" \
+            http_proxy="$TMP_http_proxy" \
+            https_proxy="$TMP_https_proxy" \
             "$0" "$@"
 fi
 
@@ -160,6 +166,11 @@ if [ -e "$CONFFILE" ]; then
     source "$CONFFILE"
 fi
 
+# no proxy as default
+ftp_proxy=
+http_proxy=
+https_proxy=
+
 # Now overwrite with preserved values if values were set before (compare with
 # 'random' string).
 [ "$TMP_LCK_FILE" = "$TMP_RANDOM" ] || LCK_FILE="$TMP_LCK_FILE"
@@ -177,6 +188,9 @@ fi
 [ "$TMP_aptfast_prefix" = "$TMP_RANDOM" ] || aptfast_prefix="$TMP_aptfast_prefix"
 [ "$TMP_APT_FAST_TIMEOUT" = "$TMP_RANDOM" ] || APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT"
 [ "$TMP_VERBOSE_OUTPUT" = "$TMP_RANDOM" ] || VERBOSE_OUTPUT="$TMP_VERBOSE_OUTPUT"
+[ "$TMP_ftp_proxy" = "$TMP_RANDOM" ] || ftp_proxy="$TMP_ftp_proxy"
+[ "$TMP_http_proxy" = "$TMP_RANDOM" ] || http_proxy="$TMP_http_proxy"
+[ "$TMP_https_proxy" = "$TMP_RANDOM" ] || https_proxy="$TMP_https_proxy"
 
 
 # Disable colors if not executed in terminal.
@@ -463,6 +477,24 @@ while true; do
   [ $OPTIND -gt $# ] && break
 done
 
+# Configure proxies. Use apt values over environment variables.
+# Note: If proxy setting is not set, there is no apt-config output.
+#       Therefore variable doesn't get overriden, which is intended.
+# Export the variables to make them available in subshells (aka the
+# downloader command).
+eval "$(apt-config shell ftp_proxy Acquire::ftp::proxy)"
+export ftp_proxy
+eval "$(apt-config shell http_proxy Acquire::http::proxy)"
+export http_proxy
+eval "$(apt-config shell https_proxy Acquire::https::proxy)"
+export https_proxy
+
+# aria2 has no socks support (see https://github.com/aria2/aria2/issues/153)
+if echo "$http_proxy" | grep -q "^socks5h://" || echo "$https_proxy" | grep -q "^socks5h://"; then
+  msg "Socks proxy detected. Falling back to ${_APTMGR}" "hint"
+  "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
+  exit 0
+fi
 
 # Run actions.
 if [ "$option" == "install" ]; then

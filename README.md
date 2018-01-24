@@ -200,10 +200,7 @@ _DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCO
 Change the download manager or add additional options to aria2c.
 
 #### Proxy ####
-```sh
-_DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --http-proxy=http://username:password@proxy_ip:proxy_port -i ${DLLIST}'
-```
-To use apt-fast behind a proxy, use `--http-proxy` option of aria2c and set username, password and proxy_port accordingly.
+apt-fast uses APT's proxy settings (`Acquire::http::proxy`, `Acquire::https::proxy`, `Acquire::ftp::proxy`) and if those are not available, the environment settings (`http_proxy`, `https_proxy`, `ftp_proxy`). Refer to APT's or the system's documentation.
 
 
 ### Download folder ###

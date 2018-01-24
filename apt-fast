@@ -279,7 +279,7 @@ get_uris(){
     apt|apt-get) uri_mgr=$_APTMGR;;
     *) uri_mgr=apt-get;;
   esac
-  uris_full="$("$uri_mgr" -y --print-uris "$@")"
+  uris_full="$("$uri_mgr" "${APT_SCRIPT_WARNING[@]}" -y --print-uris "$@")"
   uris_full_ret="$?"
   if [ "$uris_full_ret" -ne 0 ]
   then
@@ -396,6 +396,12 @@ if [ ! "$(command -v "$_APTMGR")" ]; then
   msg "\`$_APTMGR\` command not available." "warning"
   msg "You must configure $CONFFILE to use either apt-get or aptitude." "normal" "err"
   exit 1
+fi
+
+# Disable script warning if apt is used.
+APT_SCRIPT_WARNING=()
+if [ "$_APTMGR" == "apt" ]; then
+    APT_SCRIPT_WARNING=(-o "Apt::Cmd::Disable-Script-Warning=true")
 fi
 
 # Set supported hash algorithms by aria2c (and also by Debian repository).
@@ -518,12 +524,12 @@ if [ "$option" == "install" ]; then
   fi
 
   if [ -z "$DOWNLOAD_ONLY" ] || [ "$_APTMGR" == "aptitude" ]; then
-    "${_APTMGR}" "$@"
+    "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
   fi
 
 
 elif [ "$option" == "clean" ]; then
-  "${_APTMGR}" "$@" && {
+  "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@" && {
     find "$DLDIR" -maxdepth 1 -type f -delete
     [ -f "$DLLIST" ] && rm -f -- "$DLLIST"*
   }
@@ -544,7 +550,7 @@ elif [ "$option" == "source" ]; then
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also
   # more hardened (e.g. some options like --compile are available).
-  "${_APTMGR}" "$@"
+  "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
   # Uncomment following snippet to extract source directly and comment
   # both lines before.
   #while read srcfile; do
@@ -555,7 +561,7 @@ elif [ "$option" == "source" ]; then
 
 # Execute package manager directly if unknown options are passed.
 else
-  "${_APTMGR}" "$@"
+  "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
 fi
 
 # Move download file away so missing permissions won't stop usage.

@@ -373,6 +373,24 @@ get_uris(){
   #exit
 }
 
+display_downloadfile(){
+  if [ -n "$VERBOSE_OUTPUT" ]; then
+    cat "$DLLIST"
+  else
+    DISPLAY_SORT_OPTIONS=(-k 1,1)
+    # Sort output after package download size (decreasing):
+    #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
+    while read -r line; do
+        [ -z "$line" ] && continue
+        pkg="$(echo "$line" | cut -d' ' -f1)"
+        ver="$(echo "$line" | cut -d' ' -f2)"
+        size="$(echo "$line" | cut -d' ' -f3)"
+        printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
+    done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
+  fi
+  msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)" "normal"
+}
+
 # Create and insert a PID number to lockfile.
 _create_lock
 
@@ -458,21 +476,7 @@ if [ "$option" == "install" ]; then
   # Test /tmp/apt-fast.list file exists and not just the apt-fast comment line.
   # Then download all files from the list.
   if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ] && [ ! "$DOWNLOADBEFORE" ]; then
-    if [ -n "$VERBOSE_OUTPUT" ]; then
-      cat "$DLLIST"
-    else
-      DISPLAY_SORT_OPTIONS=(-k 1,1)
-      # Sort output after package download size (decreasing):
-      #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
-      while read -r line; do
-          [ -z "$line" ] && continue
-          pkg="$(echo "$line" | cut -d' ' -f1)"
-          ver="$(echo "$line" | cut -d' ' -f2)"
-          size="$(echo "$line" | cut -d' ' -f3)"
-          printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
-      done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
-    fi
-    msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)" "normal"
+    display_downloadfile
     msg
     msg "Do you want to download the packages? [Y/n] " "question"
 
@@ -528,8 +532,19 @@ elif [ "$option" == "clean" ]; then
   }
 
 elif [ "$option" == "download" ]; then
+  msg
+  msg "Working... this may take a while." "normal"
+  REMOVE_WORKING_MESSAGE=y
+
   get_uris "$@"
-  eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
+
+  [ -t 1 ] && [ -n "$REMOVE_WORKING_MESSAGE" ] && tput cuu 1 && tput el && tput cuu 1
+
+  if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ]; then
+    display_downloadfile
+    eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
+  fi
+
   if [ "$_APTMGR" == "aptitude" ]; then
     "${_APTMGR}" "$@"
   fi
@@ -537,9 +552,16 @@ elif [ "$option" == "download" ]; then
 elif [ "$option" == "source" ]; then
   msg
   msg "Working... this may take a while." "normal"
-  msg
+  REMOVE_WORKING_MESSAGE=y
+
   get_uris "$@"
-  eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
+
+  [ -t 1 ] && [ -n "$REMOVE_WORKING_MESSAGE" ] && tput cuu 1 && tput el && tput cuu 1
+
+  if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ]; then
+    display_downloadfile
+    eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
+  fi
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also
   # more hardened (e.g. some options like --compile are available).

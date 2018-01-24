@@ -313,18 +313,11 @@ get_uris(){
 
     if [ -n "$HASH_SUPPORTED" ]; then
       case "$hash_algo" in
-        SHA512) [ -z "$SHA512_SUPPORTED" ] && hash_algo= ;;
-        SHA256) [ -z "$SHA256_SUPPORTED" ] && hash_algo= ;;
-        SHA1)   [ -z "$SHA1_SUPPORTED" ]   && hash_algo= ;;
-        MD5Sum)
-          if [ -z "$MD5sum_SUPPORTED" ]; then
-            hash_algo=
-          else
-            hash_algo=md5
-          fi
-          ;;
-        *)
-          hash_algo=
+        SHA512) [ -z "$SHA512_SUPPORTED" ] && hash_algo= || hash_algo=sha-512 ;;
+        SHA256) [ -z "$SHA256_SUPPORTED" ] && hash_algo= || hash_algo=sha-256 ;;
+        SHA1)   [ -z "$SHA1_SUPPORTED" ]   && hash_algo= || hash_algo=sha-1 ;;
+        MD5Sum) [ -z "$MD5sum_SUPPORTED" ] && hash_algo= || hash_algo=md5 ;;
+        *) hash_algo=
       esac
 
       # Using apt-cache show package=version to ensure recover single and

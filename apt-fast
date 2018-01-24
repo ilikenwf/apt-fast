@@ -264,9 +264,9 @@ get_uris(){
       exit 1
     fi
   elif [ -f "$DLLIST" ]; then
-    if ! rm -f -- "$DLLIST" 2>/dev/null && touch -- "$DLLIST" 2>/dev/null
+    if ! rm -f -- "$DLLIST" 2>/dev/null && ! touch -- "$DLLIST" 2>/dev/null
     then
-      msg "Unable to write to download file. Try restarting with root rights or clean first." "warning"
+      msg "Unable to write to download file. Try restarting with root permissions or run 'apt-fast clean' first." "warning"
       exit 1
     fi
   fi

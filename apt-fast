@@ -370,6 +370,8 @@ get_uris(){
           REMOVE_WORKING_MESSAGE=
         fi
       fi
+    else
+      hash_algo=
     fi
 
     {
@@ -436,7 +438,7 @@ SHA1_SUPPORTED=
 MD5sum_SUPPORTED=
 HASH_SUPPORTED=
 if [ "$CMD" == "aria2c" ]; then
-  for supported_hash in $(aria2c -v | sed '/^Hash Algorithms:/!d; s/\(^Hash Algorithms: \|,\)\+//g'); do
+  for supported_hash in $(LC_ALL=C aria2c -v | sed '/^Hash Algorithms:/!d; s/\(^Hash Algorithms: \|,\)\+//g'); do
     case "$supported_hash" in
       sha-512) SHA512_SUPPORTED=y; HASH_SUPPORTED=y ;;
       sha-256) SHA256_SUPPORTED=y; HASH_SUPPORTED=y ;;

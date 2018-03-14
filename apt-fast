@@ -568,7 +568,7 @@ if [ "$option" == "install" ]; then
 
         cd "$DLDIR" &>/dev/null || exit 1
 
-        eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/" # execute downloadhelper command
+        eval "${_DOWNLOADER}"  # execute downloadhelper command
         if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
           # Move all packages to the apt install directory by force to ensure
           # already existing debs which may be incomplete are replaced
@@ -605,7 +605,7 @@ elif [ "$option" == "download" ]; then
 
   if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ]; then
     display_downloadfile
-    eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
+    eval "${_DOWNLOADER}"
   fi
 
   if [ "$_APTMGR" == "aptitude" ]; then
@@ -623,7 +623,7 @@ elif [ "$option" == "source" ]; then
 
   if [ -f "$DLLIST" ] && [ "$(wc -l "$DLLIST" | cut -d' ' -f1)" -gt 1 ]; then
     display_downloadfile
-    eval "${_DOWNLOADER}" | sed "s/^/${aptfast_prefix}/"
+    eval "${_DOWNLOADER}"
   fi
   # We use APT manager here to provide more verbose output. This method is
   # slightly slower then extractiong packages manually after download but also

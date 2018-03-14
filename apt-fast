@@ -222,8 +222,8 @@ _create_lock()
 {
     eval "exec $LCK_FD>\"$LCK_FILE.lock\""
 
-    trap "_remove_lock; exit" EXIT
-    trap "_remove_lock; exit 1;" INT TERM
+    trap "cleanup_aptfast; exit_cleanup_state" EXIT
+    trap "cleanup_aptfast; exit 1" INT TERM
 
     flock -n $LCK_FD || { msg_already_running; exit 1; }
 }
@@ -233,6 +233,35 @@ _remove_lock()
 {
     flock -u "$LCK_FD" 2>/dev/null
     rm -f "$LCK_FILE.lock"
+}
+
+# Move download file away so missing permissions won't stop usage.
+CLEANUP_STATE=0
+cleanup_dllist()
+{
+  if [ -f "$DLLIST" ]
+  then
+    if ! mv -- "$DLLIST{,.old}" 2>/dev/null
+    then
+      if ! rm -f -- "$DLLIST" 2>/dev/null
+      then
+        msg "Could not clean up download list file." "warning"
+        CLEANUP_STATE=1
+      fi
+    fi
+  fi
+}
+
+cleanup_aptfast()
+{
+  CLEANUP_STATE=$?
+  cleanup_dllist
+  _remove_lock
+}
+
+exit_cleanup_state()
+{
+  exit $CLEANUP_STATE
 }
 
 # decode url string
@@ -611,17 +640,6 @@ elif [ "$option" == "source" ]; then
 # Execute package manager directly if unknown options are passed.
 else
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
-fi
-
-# Move download file away so missing permissions won't stop usage.
-
-if ! mv -- "$DLLIST{,.old}" 2>/dev/null
-then
-  if ! rm -f -- "$DLLIST" 2>/dev/null
-  then
-    msg "Could not clean up download list file." "warning"
-    exit 1
-  fi
 fi
 
 # After error or all done remove our lockfile (done with EXIT trap)

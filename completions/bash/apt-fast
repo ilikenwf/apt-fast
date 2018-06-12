@@ -2,7 +2,6 @@
 # Copy of Ubuntu 10.04 _apt_get function from apt completion. Merged with 12.04
 # changes but preserve compatibility. _apt_get function renamed to _apt_fast.
 
-have apt-fast &&
 _apt_fast()
 {
     local cur prev special i

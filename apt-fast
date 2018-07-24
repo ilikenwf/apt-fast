@@ -590,9 +590,11 @@ if [ "$option" == "install" ]; then
 
 elif [ "$option" == "clean" ]; then
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@" && {
-    find "$DLDIR" -maxdepth 1 -type f -delete
-    CLEANUP_STATE="$?"
-    [ -f "$DLLIST" ] && rm -f -- "$DLLIST"* || true
+    if [ -d "$DLDIR" ]; then
+      find "$DLDIR" -maxdepth 1 -type f -delete
+      CLEANUP_STATE="$?"
+      [ -f "$DLLIST" ] && rm -f -- "$DLLIST"* || true
+    fi
   }
 
 elif [ "$option" == "download" ]; then

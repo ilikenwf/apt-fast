@@ -572,7 +572,7 @@ if [ "$option" == "install" ]; then
         if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
           # Move all packages to the apt install directory by force to ensure
           # already existing debs which may be incomplete are replaced
-          find . -type f -name "*.deb" -execdir mv -ft "$APTCACHE" {} \+
+		  find . -type f \( -name '*.deb' -o -name '*.ddeb' \) -execdir mv -ft "$APTCACHE" {} \+
         fi
         cd - &>/dev/null || msg "Failed to change back directory" "warning"
       fi

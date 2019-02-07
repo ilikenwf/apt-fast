@@ -48,6 +48,8 @@ Installation
 
 ```sh
 sudo add-apt-repository ppa:apt-fast/stable
+# this command will update only apt-fast, so you can later use apt-fast to update everything
+# sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/apt-fast-ubuntu-stable-disco.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
 sudo apt-get update
 sudo apt-get -y install apt-fast
 ```

@@ -41,6 +41,7 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
   - [APT archives cache](#apt-archives-cache)
   - [Verbose output](#verbose-output)
   - [Colors](#colors)
+- [FAQ](#faq)
 - [License](#license)
 - [Special thanks](#special-thanks)
 
@@ -250,6 +251,16 @@ cBlue='\e[0;34m'
 endColor='\e[0m' 
 ```
 Terminal colors used for dialogs. Refer to [ANSI Escape sequences](http://ascii-table.com/ansi-escape-sequences.php) for a list of possible values. Disabled when not using terminal.
+
+
+FAQ
+---
+### I get checksum errors on Raspberry PI, how to fix? ###
+Add following line to your `/etc/apt-fast.conf`:
+
+```bash
+_DOWNLOADER="${_DOWNLOADER} --header 'Accept: */*'"
+```
 
 
 License

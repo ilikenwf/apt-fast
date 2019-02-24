@@ -18,6 +18,7 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
 
 - [Installation](#installation)
   - [Ubuntu PPA](#ubuntu-ppa)
+  - [Debian and derivates](#debian)
   - [Quick Install](#quick-install)
   - [Manual](#manual)
   - [Autocompletion](#autocompletion)
@@ -57,7 +58,24 @@ You can use the Ubuntu PPA to get a graphical configuration file setup and autom
 
 * [ppa:apt-fast/stable](https://code.launchpad.net/~apt-fast/+archive/stable)
 
-Some distros, such as PCLinuxOS include apt-fast in their repos.
+
+### Debian and derivates ###
+Some distros, such as PCLinuxOS include apt-fast in their repositories. However if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.list`:
+
+```
+deb http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main 
+deb-src http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main
+```
+
+To install apt-fast execute following commands:
+```bash
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B
+sudo apt-get update
+sudo apt-get install apt-fast
+```
+
+Note that the PPA version ``bionic`` might need to be updated with the recent Ubuntu LTS codename to stay up-to-date.
+
 
 ### Quick Install ###
 You can quickly install `apt-fast` by running:

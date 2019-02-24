@@ -18,7 +18,7 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
 
 - [Installation](#installation)
   - [Ubuntu PPA](#ubuntu-ppa)
-  - [Debian and derivates](#debian)
+  - [Debian and derivates](#debian-and-derivates)
   - [Quick Install](#quick-install)
   - [Manual](#manual)
   - [Autocompletion](#autocompletion)

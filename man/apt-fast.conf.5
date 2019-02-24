@@ -1,13 +1,13 @@
 '\"
 .\" Man page for apt-fast.conf
 .\"
-.\" Copyright: 2012, 2017 Dominique Lasserre <lasserre.d@gmail.com>
+.\" Copyright: 2012, 2017, 2019 Dominique Lasserre <lasserre.d@gmail.com>
 .\"
 .\" You may distribute this file under the terms of the GNU General
 .\" Public License as published by the Free Software Foundation; either
 .\" version 3 of the License, or (at your option) any later version.
 .\"
-.TH "APT\-FAST.CONF" "5" "2017-11-20" "apt\-fast 1.9" "apt\-fast Manual"
+.TH "APT\-FAST.CONF" "5" "2019-02-24" "apt\-fast 1.9" "apt\-fast Manual"
 .SH "NAME"
 .LP
 apt\-fast.conf \- configuration file for \fBapt\-fast\fR(5)
@@ -113,7 +113,7 @@ MIRROR1\\tMIRROR2\\tMIRROR3...
 etc.
 
 .br
-Default: 'aria2c \-\-no-conf \-c \-j ${_MAXNUM} \-x ${_MAXCONPERSRV} \-s ${_SPLITCON} \-i ${DLLIST} \-\-min\-split\-size=${_MINSPLITSZ} \-\-stream\-piece\-selector=${_PIECEALGO} \-\-connect\-timeout=600 \-\-timeout=600 \-m0'
+Default: 'aria2c \-\-no-conf \-c \-j ${_MAXNUM} \-x ${_MAXCONPERSRV} \-s ${_SPLITCON} \-i ${DLLIST} \-\-min\-split\-size=${_MINSPLITSZ} \-\-stream\-piece\-selector=${_PIECEALGO} \-\-connect\-timeout=600 \-\-timeout=600 \-m0 \-\-header "Accept: */*"'
 .TP
 \fBDLDIR\fR
 Directory where to download packages with download helper to.

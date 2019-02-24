@@ -3,7 +3,7 @@ apt-fast v1.9
 Use this just like aptitude or apt-get for faster package downloading.
 
 Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
-Improvements, maintenance, revisions - 2012, 2017-2018 Dominique Lasserre
+Improvements, maintenance, revisions - 2012, 2017-2019 Dominique Lasserre
 
 You may distribute this file under the terms of the GNU General
 Public License as published by the Free Software Foundation; either
@@ -41,7 +41,6 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
   - [APT archives cache](#apt-archives-cache)
   - [Verbose output](#verbose-output)
   - [Colors](#colors)
-- [FAQ](#faq)
 - [License](#license)
 - [Special thanks](#special-thanks)
 
@@ -253,23 +252,13 @@ endColor='\e[0m'
 Terminal colors used for dialogs. Refer to [ANSI Escape sequences](http://ascii-table.com/ansi-escape-sequences.php) for a list of possible values. Disabled when not using terminal.
 
 
-FAQ
----
-### I get checksum errors on Raspberry PI, how to fix? ###
-Add following line to your `/etc/apt-fast.conf`:
-
-```bash
-_DOWNLOADER="${_DOWNLOADER} --header 'Accept: */*'"
-```
-
-
 License
 -------
 Consider apt-fast and all of its derivatives licensed under the GNU GPLv3+.
 
 Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
 
-Improvements, maintenance, revisions - 2012, 2017-2018 Dominique Lasserre
+Improvements, maintenance, revisions - 2012, 2017-2019 Dominique Lasserre
 
 
 Special thanks

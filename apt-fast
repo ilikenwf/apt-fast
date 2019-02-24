@@ -4,7 +4,7 @@
 # Use this just like aptitude or apt-get for faster package downloading.
 #
 # Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
-# Improvements, maintenance, revisions - 2012, 2017-2018 Dominique Lasserre
+# Improvements, maintenance, revisions - 2012, 2017-2019 Dominique Lasserre
 #
 # You may distribute this file under the terms of the GNU General
 # Public License as published by the Free Software Foundation; either
@@ -158,7 +158,7 @@ DOWNLOADBEFORE=
 VERBOSE_OUTPUT=
 
 # Download command.
-_DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} -i ${DLLIST} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --connect-timeout=600 --timeout=600 -m0'
+_DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} -i ${DLLIST} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --connect-timeout=600 --timeout=600 -m0 --header "Accept: */*"'
 
 # Load config file.
 CONFFILE="/etc/apt-fast.conf"

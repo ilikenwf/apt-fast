@@ -119,6 +119,14 @@ chown root:root /usr/share/zsh/functions/Completion/Debian/_apt-fast
 source /usr/share/zsh/functions/Completion/Debian/_apt-fast
 ```
 
+#### Fish ####
+
+```fish
+cp completions/fish/apt-fast.fish /etc/fish/conf.d/completions/
+chown root:root /etc/fish/conf.d/completions/apt-fast.fish
+source /etc/fish/conf.d/completions/apt-fast.fish
+```
+
 ### Man page installation ###
 
 ```sh

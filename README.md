@@ -24,6 +24,7 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
   - [Autocompletion](#autocompletion)
     - [Bash](#bash)
     - [Zsh](#zsh)
+    - [Fish](#fish)
   - [Man page installation](#man-page-installation)
 - [Configuration](#configuration)
   - [Package manager](#package-manager)

@@ -24,6 +24,7 @@ apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically 
   - [Autocompletion](#autocompletion)
     - [Bash](#bash)
     - [Zsh](#zsh)
+    - [Fish](#fish)
   - [Man page installation](#man-page-installation)
 - [Configuration](#configuration)
   - [Package manager](#package-manager)
@@ -117,6 +118,14 @@ chown root:root /etc/bash_completion.d/apt-fast
 cp completions/zsh/_apt-fast /usr/share/zsh/functions/Completion/Debian/
 chown root:root /usr/share/zsh/functions/Completion/Debian/_apt-fast
 source /usr/share/zsh/functions/Completion/Debian/_apt-fast
+```
+
+#### Fish ####
+
+```fish
+cp completions/fish/apt-fast.fish /etc/fish/conf.d/completions/
+chown root:root /etc/fish/conf.d/completions/apt-fast.fish
+source /etc/fish/conf.d/completions/apt-fast.fish
 ```
 
 ### Man page installation ###

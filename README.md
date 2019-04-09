@@ -232,9 +232,9 @@ apt-fast uses APT's proxy settings (`Acquire::http::proxy`, `Acquire::https::pro
 
 ### Download folder ###
 ```sh
-DLDIR='/var/cache/apt/archives/apt-fast'
+DLDIR='/var/cache/apt/apt-fast'
 ```
-Directory where apt-fast downloads the packages.
+Directory where apt-fast (temporarily) downloads the packages.
 
 
 ### APT archives cache ###

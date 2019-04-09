@@ -124,9 +124,9 @@ eval "$(apt-config shell APTCACHE Dir::Cache::archives/d)"
 # Check if APT config option Dir::Cache::archives::apt-fast-partial is set.
 eval "$(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)"
 if [ -z "$apt_fast_partial" ]; then
-  eval "$(apt-config -o Dir::Cache::archives::apt-fast-partial=apt-fast shell DLDIR Dir::Cache::archives::apt-fast-partial/d)"
+  DLDIR="$(realpath "${APTCACHE}/../apt-fast")"
 else
-  eval "$(apt-config shell DLDIR Dir::Cache::archives::apt-fast-partial/d)"
+  DLDIR="${apt_fast_partial}"
 fi
 # Currently not needed.
 eval "$(apt-config shell LISTDIR Dir::State::lists/d)"

@@ -271,8 +271,52 @@ urldecode()
     printf '%b' "${1//%/\\x}"
 }
 
+# Maps a mirror uri to the first entry of that list, so get_mirrors can take it.
+# We definitely don't want to resolve those more than once each run...
+declare -A mirror_uri_map
+
+# Handles a mirror URI, with caching. Parses the given list into MIRRORS.
+handle_mirror()
+{
+  # The most recognizable split point is the "pool" thing. This
+  # will be apt-ftparchive-specific, but I suspect the transport is doing that
+  # itself.
+  local head="${1%%/pool/*}" body="/pool/${1#*/pool/}"
+
+  if ! [[ ${mirror_uri_map[$head]} ]]; then
+    local protocol="${head%%:*}" path="${head#*:}"
+    local mirrorfile list_protocol
+
+    case $protocol in
+      (mirror+file)
+        mirrorfile=$path;;
+      (*)
+        # Well, gotta fetch...
+        if [[ $protocol == mirror ]]; then protocol=mirror+http; fi
+        aria2c -d /tmp -o apt-file-mirror.list "${protocol#mirror+}:${path}"
+        mirrorfile=/tmp/apt-file-mirror.list;;
+    esac
+
+    local mirrors
+    mapfile -t mirrors < "$mirrorfile"
+    # This is a TAB. The examples say the URI ends at the TAB. We extract that.
+    mirrors=("${mirrors[@]%%  *}")
+    # get_mirrors says spaces are fine... no local IFS=, needed here.
+    MIRRORS+=("${mirrors[*]}")
+    mirror_uri_map[$head]=${mirrors[0]}
+  fi
+
+  printf '%s\n' "${mirror_uri_map[$head]}$body"
+}
+
 # Check if mirrors are available. And if so add all mirrors to download list.
 get_mirrors(){
+  local mirrors
+  # Handle apt-transport-mirror
+  if [[ $1 == mirror* ]]; then
+    set -- "$(handle_mirror "$1")"
+  fi
+
   # Check all mirror lists.
   for mirrorstr in "${MIRRORS[@]}"; do
     # Build mirrors array from comma separated string.
@@ -411,7 +455,7 @@ get_uris(){
       fi
       echo " out=$filename"
     } >> "$DLLIST"
-  done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")"
+  done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp|mirror[^:]+)://")"
 
   #cat "$DLLIST"
   #LCK_RM

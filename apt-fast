@@ -221,11 +221,10 @@ fi
 _create_lock()
 {
     eval "exec $LCK_FD>\"$LCK_FILE.lock\""
+    flock -n $LCK_FD || { msg_already_running; exit 1; }
 
     trap "cleanup_aptfast; exit_cleanup_state" EXIT
     trap "cleanup_aptfast; exit 1" INT TERM
-
-    flock -n $LCK_FD || { msg_already_running; exit 1; }
 }
 
 # unlock and remove the lock file
@@ -304,13 +303,15 @@ get_uris(){
     if ! mkdir -p -- "$(dirname "$DLLIST")"
     then
       msg "Could not create download file directory." "warning"
-      exit 1
+      CLEANUP_STATE=1
+      exit
     fi
   elif [ -f "$DLLIST" ]; then
     if ! rm -f -- "$DLLIST" 2>/dev/null && ! touch -- "$DLLIST" 2>/dev/null
     then
       msg "Unable to write to download file. Try restarting with root permissions or run 'apt-fast clean' first." "warning"
-      exit 1
+      CLEANUP_STATE=1
+      exit
     fi
   fi
 
@@ -323,11 +324,11 @@ get_uris(){
     *) uri_mgr=apt-get;;
   esac
   uris_full="$("$uri_mgr" "${APT_SCRIPT_WARNING[@]}" -y --print-uris "$@")"
-  uris_full_ret="$?"
-  if [ "$uris_full_ret" -ne 0 ]
+  CLEANUP_STATE="$?"
+  if [ "$CLEANUP_STATE" -ne 0 ]
   then
     msg "Package manager quit with exit code." "warning"
-    exit "$uris_full_ret"
+    exit
   fi
   while read -r pkg_uri_info
   do
@@ -444,14 +445,16 @@ CMD="$(echo "$_DOWNLOADER" | sed 's/^\s*\([^ ]\+\).*$/\1/')"
 if [ ! "$(command -v "$CMD")" ]; then
   msg "Command not found: $CMD" "normal" "err"
   msg "You must configure $CONFFILE to use aria2c or another supported download manager" "normal" "err"
-  exit 1
+  CLEANUP_STATE=1
+  exit
 fi
 
 # Make sure package manager is available.
 if [ ! "$(command -v "$_APTMGR")" ]; then
   msg "\`$_APTMGR\` command not available." "warning"
   msg "You must configure $CONFFILE to use either apt-get or aptitude." "normal" "err"
-  exit 1
+  CLEANUP_STATE=1
+  exit
 fi
 
 # Disable script warning if apt is used.
@@ -524,7 +527,8 @@ export https_proxy
 if echo "$http_proxy" | grep -q "^socks5h://" || echo "$https_proxy" | grep -q "^socks5h://"; then
   msg "Socks proxy detected. Falling back to ${_APTMGR}" "hint"
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
-  exit 0
+  CLEANUP_STATE="$?"
+  exit
 fi
 
 # Run actions.
@@ -544,7 +548,7 @@ if [ "$option" == "install" ]; then
     msg "Do you want to download the packages? [Y/n] " "question"
 
     while ((!updsys)); do
-      read -r -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg; msg "Timed out." "warning"; exit 1; }
+      read -r -sn1 -t "$APT_FAST_TIMEOUT" answer || { msg; msg "Timed out." "warning"; CLEANUP_STATE=1; exit; }
       case "$answer" in
         [JjYy])    result=1; updsys=1 ;;
         [Nn])      result=0; updsys=1 ;;
@@ -566,7 +570,7 @@ if [ "$option" == "install" ]; then
           mkdir -p -- "$DLDIR"
         fi
 
-        cd "$DLDIR" &>/dev/null || exit 1
+        cd "$DLDIR" &>/dev/null || { msg; msg "Not able to change into download directory." "warning"; CLEANUP_STATE=1; exit; }
 
         eval "${_DOWNLOADER}"  # execute downloadhelper command
         if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
@@ -577,7 +581,8 @@ if [ "$option" == "install" ]; then
         cd - &>/dev/null || msg "Failed to change back directory" "warning"
       fi
     else
-      exit 1
+      CLEANUP_STATE=1
+      exit
     fi
   else
     [ -t 1 ] && tput el

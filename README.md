@@ -281,3 +281,4 @@ Special thanks
  * Sergio Silva - test to see if axel is installed, root detection/sudo autorun, lock file check/creation
  * Waldemar {BOB}{Burnfaker} Wetzel - lockfile improvements, separate config file
  * maclarke - locking improvements
+ * artoria2e5 - apt-file-mirror support

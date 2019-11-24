@@ -285,7 +285,7 @@ handle_mirror()
 
   if ! [[ ${mirror_uri_map[$head]} ]]; then
     local protocol="${head%%:*}" path="${head#*:}"
-    local mirrorfile list_protocol
+    local mirrorfile
 
     case $protocol in
       (mirror+file)

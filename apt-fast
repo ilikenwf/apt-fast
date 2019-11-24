@@ -33,6 +33,17 @@ msg(){
   fi
 }
 
+# Early bash version check.
+if (( BASH_VERSINFO[0] < 4 )) ||
+   (( BASH_VERSINFO[0] == 4 && BASH_VERSINFO[0] < 3 ))
+then
+  printf '%s\n' "This script uses features only available in bash 4.3+: "\
+                "associative arrays and namerefs."$'\n'\
+                "Please run it with a never version of GNU bash "\
+                "(you are running ${BASH_VERSION}.)">&2
+  exit 2
+fi
+
 # Search for known options and decide if root privileges are needed.
 root=1  # default value: we need root privileges
 option=
@@ -62,49 +73,44 @@ done
 # we need to preserve all interesting env variables. As this wouldn't be
 # difficult enough we have to preserve complete env vars (especially if value
 # ist set (even empty) or not) when changing context (sudo)...
+sudo_exports=(DEBUG="$DEBUG")
+shadowvars=()
 # Set a 'random' string to all unset variables.
 TMP_RANDOM="13979853562951413"
-TMP_LCK_FILE="${LCK_FILE-${TMP_RANDOM}}"
-TMP_DOWNLOADBEFORE="${DOWNLOADBEFORE-${TMP_RANDOM}}"
-TMP__APTMGR="${_APTMGR-${TMP_RANDOM}}"
-TMP_APTCACHE="${APTCACHE-${TMP_RANDOM}}"
-TMP_DLDIR="${DLDIR-${TMP_RANDOM}}"
-TMP_DLLIST="${DLLIST-${TMP_RANDOM}}"
-TMP_LISTDIR="${LISTDIR-${TMP_RANDOM}}"
-TMP__MAXNUM="${MAXNUM-${TMP_RANDOM}}"
-TMP__MAXCONPERSRV="${MAXCONPERSRV-${TMP_RANDOM}}"
-TMP__SPLITCON="${SPLITCON-${TMP_RANDOM}}"
-TMP__MINSPLITSZ=${MINSPLITSZ-${TMP_RANDOM}}
-TMP__PIECEALGO=${PIECEALGO-${TMP_RANDOM}}
-TMP_aptfast_prefix="${aptfast_prefix-${TMP_RANDOM}}"
-TMP_APT_FAST_TIMEOUT="${APT_FAST_TIMEOUT-${TMP_RANDOM}}"
-TMP_VERBOSE_OUTPUT="${VERBOSE_OUTPUT-${TMP_RANDOM}}"
-TMP_ftp_proxy="${ftp_proxy-${TMP_RANDOM}}"
-TMP_http_proxy="${http_proxy-${TMP_RANDOM}}"
-TMP_https_proxy="${https_proxy-${TMP_RANDOM}}"
+shadowify() {
+  # I heard that people call this "variable shadowing."
+  declare -n this="$1" tmpthis="TMP_$1"
+  tmpthis="${this-${TMP_RANDOM}}"
+  sudo_exports+=("TMP_$1=$tmpthis")
+  shadowvars+=("$1")
+}
+
+shadowify LCK_FILE
+shadowify DOWNLOADBEFORE
+shadowify _APTMGR
+shadowify APTCACHE
+shadowify DLDIR
+shadowify DLLIST
+shadowify MIRRORLIST
+shadowify LISTDIR
+shadowify _MAXNUM
+shadowify _MAXCONPERSRV
+shadowify _SPLITCON
+shadowify _MINSPLITSZ
+shadowify _SPLITCON
+shadowify _MINSPLITSZ
+shadowify _PIECEALGO
+shadowify aptfast_prefix
+shadowify APT_FAST_TIMEOUT
+shadowify VERBOSE_OUTPUT
+shadowify ftp_proxy
+shadowify http_proxy
+shadowify https_proxy
 
 # Check for proper privileges.
 # Call explicitly with environment variables to get them into root conext.
 if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
-  exec sudo DEBUG="$DEBUG" \
-            LCK_FILE="$TMP_LCK_FILE" \
-            DOWNLOADBEFORE="$TMP_DOWNLOADBEFORE" \
-            _APTMGR="$TMP__APTMGR" \
-            APTCACHE="$TMP_APTCACHE" \
-            DLDIR="$TMP_DLDIR" \
-            DLLIST="$TMP_DLLIST" \
-            LISTDIR="$TMP_LISTDIR" \
-            _MAXNUM="$TMP__MAXNUM" \
-            _MAXCONPERSRV="$TMP__MAXCONPERSRV" \
-            _SPLITCON="$TMP__SPLITCON" \
-            _MINSPLITSZ="$TMP__MINSPLITSZ" \
-            _PIECEALGO="$TMP__PIECEALGO" \
-            aptfast_prefix="$TMP_aptfast_prefix" \
-            APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT" \
-            VERBOSE_OUTPUT="$TMP_VERBOSE_OUTPUT" \
-            ftp_proxy="$TMP_ftp_proxy" \
-            http_proxy="$TMP_http_proxy" \
-            https_proxy="$TMP_https_proxy" \
+  exec sudo "${sudo_exports[@]}"
             "$0" "$@"
 fi
 
@@ -131,6 +137,7 @@ fi
 # Currently not needed.
 eval "$(apt-config shell LISTDIR Dir::State::lists/d)"
 DLLIST="/tmp/apt-fast.list"
+MIRRORLIST="/tmp/apt-file-mirror.list"
 _MAXNUM=5
 _MAXCONPERSRV=10
 _SPLITCON=8
@@ -173,24 +180,15 @@ https_proxy=
 
 # Now overwrite with preserved values if values were set before (compare with
 # 'random' string).
-[ "$TMP_LCK_FILE" = "$TMP_RANDOM" ] || LCK_FILE="$TMP_LCK_FILE"
-[ "$TMP_DOWNLOADBEFORE" = "$TMP_RANDOM" ] || DOWNLOADBEFORE="$TMP_DOWNLOADBEFORE"
-[ "$TMP__APTMGR" = "$TMP_RANDOM" ] || _APTMGR="$TMP__APTMGR"
-[ "$TMP_APTCACHE" = "$TMP_RANDOM" ] || APTCACHE="$TMP_APTCACHE"
-[ "$TMP_DLDIR" = "$TMP_RANDOM" ] || DLDIR="$TMP_DLDIR"
-[ "$TMP_DLLIST" = "$TMP_RANDOM" ] || DLLIST="$TMP_DLLIST"
-[ "$TMP_LISTDIR" = "$TMP_RANDOM" ] || LISTDIR="$TMP_LISTDIR"
-[ "$TMP__MAXNUM" = "$TMP_RANDOM" ] || _MAXNUM="$TMP__MAXNUM"
-[ "$TMP__MAXCONPERSRV" = "$TMP_RANDOM" ] || _MAXCONPERSRV="$TMP__MAXCONPERSRV"
-[ "$TMP__SPLITCON" = "$TMP_RANDOM" ] || _SPLITCON="$TMP__SPLITCON"
-[ "$TMP__MINSPLITSZ" = "$TMP_RANDOM" ] || _MINSPLITSZ="$TMP__MINSPLITSZ"
-[ "$TMP__PIECEALGO" = "$TMP_RANDOM" ] || _PIECEALGO="$TMP__PIECEALGO"
-[ "$TMP_aptfast_prefix" = "$TMP_RANDOM" ] || aptfast_prefix="$TMP_aptfast_prefix"
-[ "$TMP_APT_FAST_TIMEOUT" = "$TMP_RANDOM" ] || APT_FAST_TIMEOUT="$TMP_APT_FAST_TIMEOUT"
-[ "$TMP_VERBOSE_OUTPUT" = "$TMP_RANDOM" ] || VERBOSE_OUTPUT="$TMP_VERBOSE_OUTPUT"
-[ "$TMP_ftp_proxy" = "$TMP_RANDOM" ] || ftp_proxy="$TMP_ftp_proxy"
-[ "$TMP_http_proxy" = "$TMP_RANDOM" ] || http_proxy="$TMP_http_proxy"
-[ "$TMP_https_proxy" = "$TMP_RANDOM" ] || https_proxy="$TMP_https_proxy"
+for i in "${shadowvars[@]}"
+do
+  declare -n thisvar="$i" tempthisvar="TMP_$i"
+  if [[ $tempthisvar != $TMP_RANDOM ]]
+  then
+    thisvar=${tempthisvar}
+  fi
+done
+unset -n thisvar tempthisvar
 
 
 # Disable colors if not executed in terminal.
@@ -237,25 +235,27 @@ _remove_lock()
 
 # Move download file away so missing permissions won't stop usage.
 CLEANUP_STATE=0
-cleanup_dllist()
+cleanup_list()
 {
-  if [ -f "$DLLIST" ]
+  if [ ! -f "$1" ]
   then
-    if ! mv -- "$DLLIST{,.old}" 2>/dev/null
-    then
-      if ! rm -f -- "$DLLIST" 2>/dev/null
-      then
-        msg "Could not clean up download list file." "warning"
-        CLEANUP_STATE=1
-      fi
-    fi
+    return
+  fi
+
+  if ! {
+    mv -- "$1{,.old}" 2>/dev/null ||
+    rm -f -- "$1" 2>/dev/null
+  }
+  then
+    msg "Could not clean up $2 list file." "warning"
+    CLEANUP_STATE=1
   fi
 }
 
 cleanup_aptfast()
 {
   [ "$CLEANUP_STATE" -eq 0 ] && CLEANUP_STATE=$?
-  cleanup_dllist
+  cleanup_list "$DLLIST" download
   _remove_lock
 }
 
@@ -293,12 +293,13 @@ handle_mirror()
       (*)
         # Well, gotta fetch...
         if [[ $protocol == mirror ]]; then protocol=mirror+http; fi
-        aria2c -d /tmp -o apt-file-mirror.list "${protocol#mirror+}:${path}"
-        mirrorfile=/tmp/apt-file-mirror.list;;
+        aria2c -d "${MIRRORLIST%/*}" -o "${MIRRORLIST##*/}" "${protocol#mirror+}:${path}"
+        mirrorfile="${MIRRORLIST}";;
     esac
 
     local mirrors
     mapfile -t mirrors < "$mirrorfile"
+    [ -f "MIRRORLIST" ] && rm -f "$MIRRORLIST"
     # This is a TAB. The examples say the URI ends at the TAB. We extract that.
     mirrors=("${mirrors[@]%%  *}")
     # get_mirrors says spaces are fine... no local IFS=, needed here.
@@ -455,7 +456,8 @@ get_uris(){
       fi
       echo " out=$filename"
     } >> "$DLLIST"
-  done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp|mirror[^:]+)://")"
+  done <<<"$(<<<"$uris_full" grep -E "^'((mirror\+)?((http(s|)|(s|)ftp)|mirror)://|mirror\+file:/)")"
+  #'
 
   #cat "$DLLIST"
   #LCK_RM

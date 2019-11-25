@@ -17,20 +17,17 @@
 # Message types are 'normal', 'hint' or 'warning'. Warnings and messages with a
 # third argument are piped to stderr.
 msg(){
-  msg_options=()
+  local beginColor msg_options=() fd=1 nl='\n'
   case "$2" in
     normal) beginColor="$cGreen";;
     hint) beginColor="$cBlue";;
-    warning) beginColor="$cRed";;
-    question) beginColor="$cRed"; msg_options=(-n);;
+    warning) beginColor="$cRed" fd=2;;
+    question) beginColor="$cRed"; nl='';;
     *) beginColor= ;;
   esac
+  if [ -n "$3" ]; then fd=2; fi
 
-  if [ -z "$3" ] && [ "$2" != "warning" ]; then
-    echo -e "${msg_options[@]}" "${aptfast_prefix}${beginColor}$1${endColor}"
-  else
-    echo -e "${msg_options[@]}" "${aptfast_prefix}${beginColor}$1${endColor}" >&2
-  fi
+  printf "%s${beginColor}%b${endColor}${nl}" "$(aptfast_prefix)" "$1" >&"$fd"
 }
 
 # Early bash version check.
@@ -100,7 +97,6 @@ shadowify _MINSPLITSZ
 shadowify _SPLITCON
 shadowify _MINSPLITSZ
 shadowify _PIECEALGO
-shadowify aptfast_prefix
 shadowify APT_FAST_TIMEOUT
 shadowify VERBOSE_OUTPUT
 shadowify ftp_proxy
@@ -145,8 +141,7 @@ _MINSPLITSZ="1M"
 _PIECEALGO="default"
 
 # Prefix in front of apt-fast output:
-aptfast_prefix=
-# aptfast_prefix="$(date '+%b %_d %T.%N') apt-fast: "
+# aptfast_prefix(){ printf '%s' "$(date '+%b %_d %T.%N') apt-fast: "; }
 
 # Set color variables.
 cGreen='\e[0;32m'
@@ -197,8 +192,17 @@ if [ ! -t 1 ]; then
   cRed=
   cBlue=
   endColor=
-  #FIXME: Time not updated.
-  [ -z "$aptfast_prefix" ] && aptfast_prefix="[apt-fast $(date +"%T")]"
+fi
+
+# Define the (logging) prefix if it is never defined.
+if ! declare -f aptfast_prefix 2>/dev/null; then
+  if [ -t 1 ]; then
+    # The TTY user has a clock on the wall. No need.
+    aptfast_prefix(){ true; }
+  else
+    # %(%T)T is like $(date +%T), but built into printf.
+    aptfast_prefix(){ printf '[apt-fast %(%T)T] '; }
+  fi
 fi
 
 
@@ -476,7 +480,7 @@ display_downloadfile(){
         pkg="$(echo "$line" | cut -d' ' -f1)"
         ver="$(echo "$line" | cut -d' ' -f2)"
         size="$(echo "$line" | cut -d' ' -f3)"
-        printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
+        printf '%s%-40s %-20s %10s\n' "$(aptfast_prefix)" "$pkg" "$ver" "$size"
     done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
   fi
   msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)" "normal"

@@ -41,6 +41,8 @@ then
   exit 2
 fi
 
+shopt -s extglob
+
 # Search for known options and decide if root privileges are needed.
 root=1  # default value: we need root privileges
 option=
@@ -306,6 +308,8 @@ handle_mirror()
     [ -f "MIRRORLIST" ] && rm -f "$MIRRORLIST"
     # This is a TAB. The examples say the URI ends at the TAB. We extract that.
     mirrors=("${mirrors[@]%%  *}")
+    # Normalize the slashes. (s@/*$@/@g)
+    mirrors=("${mirrors[@]/%*(\/)/\/}")
     # get_mirrors says spaces are fine... no local IFS=, needed here.
     MIRRORS+=("${mirrors[*]}")
     mirror_uri_map[$head]=${mirrors[0]}

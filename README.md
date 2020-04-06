@@ -121,9 +121,12 @@ Then simply run apt-fast instead of apt-get or aptitude.
 
 
 ### Autocompletion ###
+The completions for the respective shells use the existing apt-get completion. It is required to have the apt-get completion installed. In case of Bash the package `bash-completion` is required. For Zsh and Fish required completions are included by default (in their `*-common` packages).
+
 #### Bash ####
 
 ```sh
+apt-get install bash-completion
 cp completions/bash/apt-fast /etc/bash_completion.d/
 chown root:root /etc/bash_completion.d/apt-fast
 . /etc/bash_completion

@@ -651,6 +651,7 @@ elif [ "$option" == "source" ]; then
 # Execute package manager directly if unknown options are passed.
 else
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
+  CLEANUP_STATE=$?
 fi
 
 # After error or all done remove our lockfile (done with EXIT trap)

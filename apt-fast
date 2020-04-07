@@ -165,6 +165,7 @@ for Prefix in /usr/local/etc /etc; do
     CONFFILE=${Prefix}/apt-fast.conf
     if [ -e "$CONFFILE" ]; then
         source "$CONFFILE"
+        break
     fi
 done
 

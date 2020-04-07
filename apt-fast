@@ -256,7 +256,8 @@ cleanup_dllist()
 
 cleanup_aptfast()
 {
-  [ "$CLEANUP_STATE" -eq 0 ] && CLEANUP_STATE=$?
+  local last_exit_code=$?
+  [ "$CLEANUP_STATE" -eq 0 ] && CLEANUP_STATE=$last_exit_code
   cleanup_dllist
   _remove_lock
 }
@@ -530,7 +531,6 @@ export https_proxy
 if echo "$http_proxy" | grep -q "^socks5h://" || echo "$https_proxy" | grep -q "^socks5h://"; then
   msg "Socks proxy detected. Falling back to ${_APTMGR}" "hint"
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
-  CLEANUP_STATE="$?"
   exit
 fi
 
@@ -591,6 +591,7 @@ if [ "$option" == "install" ]; then
     [ -t 1 ] && tput el
   fi
 
+  # different problem resolving for aptitude
   if [ -z "$DOWNLOAD_ONLY" ] || [ "$_APTMGR" == "aptitude" ]; then
     "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
   fi
@@ -619,6 +620,7 @@ elif [ "$option" == "download" ]; then
     eval "${_DOWNLOADER}"
   fi
 
+  # different problem resolving for aptitude
   if [ "$_APTMGR" == "aptitude" ]; then
     "${_APTMGR}" "$@"
   fi
@@ -651,7 +653,6 @@ elif [ "$option" == "source" ]; then
 # Execute package manager directly if unknown options are passed.
 else
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
-  CLEANUP_STATE=$?
 fi
 
 # After error or all done remove our lockfile (done with EXIT trap)

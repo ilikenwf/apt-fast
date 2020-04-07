@@ -1,1 +1,2 @@
-compdef apt-fast=apt-get
+#compdef apt-fast
+compdef _apt apt-fast=apt-get

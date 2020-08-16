@@ -170,6 +170,8 @@ _APTMGR=apt-get
 ```
 Change package manager used for installation. Supported are apt-get, aptitude, apt.
 
+Note: When using Linux Mint, don't use apt because the distributor provides a custom shell script with different functionality unsupported by apt-fast.
+
 
 ### Confirmation dialog ###
 ```sh

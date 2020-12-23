@@ -577,6 +577,10 @@ if [ "$option" == "install" ]; then
 
         eval "${_DOWNLOADER}"  # execute downloadhelper command
         if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
+          # Delete failed downloads
+          for f in *.aria2; do
+            [ -ne "*.aria2" ] && rm "${f%.*}" "$f"
+          done
           # Move all packages to the apt install directory by force to ensure
           # already existing debs which may be incomplete are replaced
           find . -type f \( -name '*.deb' -o -name '*.ddeb' \) -execdir mv -ft "$APTCACHE" {} \+

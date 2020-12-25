@@ -579,7 +579,7 @@ if [ "$option" == "install" ]; then
         if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
           # Delete failed downloads
           for f in *.aria2; do
-            [[ "$f" -ne "*.aria2" ]] && rm "${f%.*}" "$f"
+            [[ "$f" != "*.aria2" ]] && rm "${f%.*}" "$f"
           done
           # Move all packages to the apt install directory by force to ensure
           # already existing debs which may be incomplete are replaced

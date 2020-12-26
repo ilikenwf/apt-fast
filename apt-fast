@@ -583,7 +583,7 @@ if [ "$option" == "install" ]; then
           # Delete incomplete/corrupted downloaded files, if any: Not recursive, as we don't expect any dirs to exist within $DLDIR
           if [ "$(find "$DLDIR" -maxdepth '1' -type 'f' -name '*.aria2' -printf '.' | wc -c)" -gt 0 ]; then
             for x in *.aria2; do
-              rm -fv "$x" "${x%.aria2}.deb" > /dev/null 2>&1
+              rm -fv "$x" "${x%.aria2}" > /dev/null 2>&1
             done
             # Could have used find instead, but it'd have taken extra steps going that way:
             # Specially when ypu don't want to touch $IFS at all...

@@ -577,10 +577,15 @@ if [ "$option" == "install" ]; then
 
         eval "${_DOWNLOADER}"  # execute downloadhelper command
         if [ "$(find "$DLDIR" -printf . | wc -c)" -gt 1 ]; then
-          # Delete failed downloads
-          for f in *.aria2; do
-            [[ "$f" -ne "*.aria2" ]] && rm "${f%.*}" "$f"
+
+          # Delete incomplete/corrupted downloaded files, if any: Not recursive, as we don't expect any dirs to exist within $DLDIR.
+
+          # When Aria2c downloads a file and detects it is corrupted, its filename won't be renamed back to its actual name,
+          # preserving .aria2 file extension, which also indicates when a file hasn't been completely downloaded.
+          for x in *.aria2; do
+            rm -f "$x" "${x%.aria2}"
           done
+
           # Move all packages to the apt install directory by force to ensure
           # already existing debs which may be incomplete are replaced
           find . -type f \( -name '*.deb' -o -name '*.ddeb' \) -execdir mv -ft "$APTCACHE" {} \+

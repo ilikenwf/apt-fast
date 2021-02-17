@@ -1,0 +1,7 @@
+{
+  "name": "apt-fast",
+  "repo": "ilikenwf/apt-fast",
+  "install": "sudo cp apt-fast ${PREFIX:-/usr/local/sbin}/apt-fast; sudo chmod +x ${PREFIX:-/usr/local/sbin}/apt-fast; sudo cp apt-fast.conf /etc/apt-fast.conf; ",
+  "scripts": ["apt-fast"],
+  "files": ["apt-fast.conf"]
+}

@@ -102,6 +102,18 @@ You can quickly install `apt-fast` by running:
 /bin/bash -c "$(curl -sL https://git.io/vokNn)"
 ```
 
+### Package Manager ###
+Using [bpkg/bpkg](https://github.com/bpkg/bpkg) to install apt-fast to current directory::
+```bash
+bpkg install ilikenwf/apt-fast
+```
+
+Install to global:
+```bash
+bpkg install -g ilikenwf/apt-fast
+PREFIX=/foo/bar bpkg install -g ilikenwf/apt-fast
+```
+
 ### Manual ###
 A manual install can be performed as such:
 

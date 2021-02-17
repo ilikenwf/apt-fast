@@ -111,6 +111,10 @@ bpkg install ilikenwf/apt-fast
 Install to global:
 ```bash
 bpkg install -g ilikenwf/apt-fast
+```
+
+With PREFIX variable:
+```
 PREFIX=/foo/bar bpkg install -g ilikenwf/apt-fast
 ```
 

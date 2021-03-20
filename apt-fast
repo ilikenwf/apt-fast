@@ -37,7 +37,7 @@ msg(){
 # check its existence, just in case
 real_APT="/usr/bin/apt-get"
 
-if [ '!' -x "$real_APT"]; then
+if [ '!' -x "$real_APT" ]; then
     _err="We need $real_APT to work, but it doesn't exist..."
     msg 'warning' "$_err"
     exit 1

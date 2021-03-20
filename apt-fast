@@ -40,9 +40,7 @@ real_APT="/usr/bin/apt-get"
 if ['!' -x "$real_APT"]; then
     _err="We need $real_APT to work, but it doesn't exist..."
     msg 'warning' "$_err"
-    echo
-    read -p 'Press ENTER to exit'
-    exit 64
+    exit 1
 fi
 
 # Search for known options and decide if root privileges are needed.

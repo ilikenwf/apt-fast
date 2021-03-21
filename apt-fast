@@ -531,7 +531,7 @@ export https_proxy
 if echo "$http_proxy" | grep -q "^socks5h://" || echo "$https_proxy" | grep -q "^socks5h://"; then
   msg "Socks proxy detected. Falling back to ${_APTMGR}" "hint"
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
-  exit
+  exit 1
 fi
 
 # Run actions.

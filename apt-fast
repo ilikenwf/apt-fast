@@ -33,9 +33,6 @@ msg(){
   fi
 }
 
-# Stores fullpath of real "apt-get"
-real_APT="/usr/bin/apt-get"
-
 # Search for known options and decide if root privileges are needed.
 root=1  # default value: we need root privileges
 option=
@@ -111,7 +108,6 @@ if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
             "$0" "$@"
 fi
 
-
 # Define lockfile.
 # Use /tmp as directory because everybody (not only root) has to have write
 # permissions.
@@ -122,7 +118,7 @@ LCK_FD=99
 
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
-_APTMGR="${real_APT}"
+_APTMGR='apt-get'
 eval "$(apt-config shell APTCACHE Dir::Cache::archives/d)"
 # Check if APT config option Dir::Cache::archives::apt-fast-partial is set.
 eval "$(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)"
@@ -171,12 +167,6 @@ for Prefix in /usr/local/etc /etc; do
         break
     fi
 done
-
-# Check if "${real_APT}" exists
-if [ '!' -x "${real_APT}" ]; then
-    msg "We use ${real_APT} in case ${_APTMGR} doesn't work, but it doesn't exist!" 'warning'
-    exit 1
-fi
 
 # no proxy as default
 ftp_proxy=
@@ -331,11 +321,10 @@ get_uris(){
   # Add header to overwrite file.
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
   # NOTE: "aptitude" doesn't have this functionality
-  # so we use either "${_APTMGR}" or "${real_APT}"
-  # to get package URI's
+  # so we use "${_APTMGR}" to get package URI's
   case "$(basename "${_APTMGR}")" in
     'apt'|'apt-get') uri_mgr="${_APTMGR}";;
-    *) uri_mgr="${real_APT}";;
+    *) uri_mgr='apt-get';;
   esac
   uris_full="$("$uri_mgr" "${APT_SCRIPT_WARNING[@]}" -y --print-uris "$@")"
   CLEANUP_STATE="$?"

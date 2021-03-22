@@ -33,15 +33,8 @@ msg(){
   fi
 }
 
-# Store fullpath of real "apt-get" and
-# check its existence, just in case
+# Stores fullpath of real "apt-get"
 real_APT="/usr/bin/apt-get"
-
-if [ '!' -x "$real_APT" ]; then
-    _err="We need $real_APT to work, but it doesn't exist..."
-    msg 'warning' "$_err"
-    exit 1
-fi
 
 # Search for known options and decide if root privileges are needed.
 root=1  # default value: we need root privileges
@@ -129,7 +122,7 @@ LCK_FD=99
 
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
-_APTMGR="$real_APT"
+_APTMGR="${real_APT}"
 eval "$(apt-config shell APTCACHE Dir::Cache::archives/d)"
 # Check if APT config option Dir::Cache::archives::apt-fast-partial is set.
 eval "$(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)"
@@ -178,6 +171,12 @@ for Prefix in /usr/local/etc /etc; do
         break
     fi
 done
+
+# Check if "${real_APT}" exists
+if [ '!' -x "${real_APT}" ]; then
+    msg "We use ${real_APT} in case ${_APTMGR} doesn't work, but it doesn't exist!" 'warning'
+    exit 1
+fi
 
 # no proxy as default
 ftp_proxy=
@@ -331,12 +330,13 @@ get_uris(){
 
   # Add header to overwrite file.
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
-  
-  # NOTE: Since "aptitude" lacks this functionality, "apt" has an
-  # unstable CLI, and "$_APTMGR" could be pointing anywhere
-  # we just use "$real_APT" to get package URI's and avoid problems
-  uri_mgr="$real_APT"
-  
+  # NOTE: "aptitude" doesn't have this functionality
+  # so we use either "${_APTMGR}" or "${real_APT}"
+  # to get package URI's
+  case "$(basename "${_APTMGR}")" in
+    'apt'|'apt-get') uri_mgr="${_APTMGR}";;
+    *) uri_mgr="${real_APT}";;
+  esac
   uris_full="$("$uri_mgr" "${APT_SCRIPT_WARNING[@]}" -y --print-uris "$@")"
   CLEANUP_STATE="$?"
   if [ "$CLEANUP_STATE" -ne 0 ]
@@ -473,7 +473,7 @@ fi
 
 # Disable script warning if apt is used.
 APT_SCRIPT_WARNING=()
-if [ "$(basename "$_APTMGR")" == "apt" ]; then
+if [ "$(basename "${_APTMGR}")" == 'apt' ]; then
     APT_SCRIPT_WARNING=(-o "Apt::Cmd::Disable-Script-Warning=true")
 fi
 
@@ -611,7 +611,7 @@ if [ "$option" == "install" ]; then
   fi
 
   # different problem resolving for aptitude
-  if [ -z "$DOWNLOAD_ONLY" ] || [ "$(basename "$_APTMGR")" == "aptitude" ]; then
+  if [ -z "$DOWNLOAD_ONLY" ] || [ "$(basename "${_APTMGR}")" == 'aptitude' ]; then
     "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
   fi
 
@@ -640,7 +640,7 @@ elif [ "$option" == "download" ]; then
   fi
 
   # different problem resolving for aptitude
-  if [ "$(basename "$_APTMGR")" == "aptitude" ]; then
+  if [ "$(basename "${_APTMGR}")" == 'aptitude' ]; then
     "${_APTMGR}" "$@"
   fi
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# apt-fast v1.9
+# apt-fast v1.9.11
 # Use this just like aptitude or apt-get for faster package downloading.
 #
 # Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
@@ -108,7 +108,6 @@ if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
             "$0" "$@"
 fi
 
-
 # Define lockfile.
 # Use /tmp as directory because everybody (not only root) has to have write
 # permissions.
@@ -119,7 +118,7 @@ LCK_FD=99
 
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
-_APTMGR=apt-get
+_APTMGR='apt-get'
 eval "$(apt-config shell APTCACHE Dir::Cache::archives/d)"
 # Check if APT config option Dir::Cache::archives::apt-fast-partial is set.
 eval "$(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)"
@@ -321,11 +320,11 @@ get_uris(){
 
   # Add header to overwrite file.
   echo "# apt-fast mirror list: $(date)" > "$DLLIST"
-  #NOTE: aptitude doesn't have this functionality, so we use apt-get to get
-  #      package URIs.
-  case "$_APTMGR" in
-    apt|apt-get) uri_mgr=$_APTMGR;;
-    *) uri_mgr=apt-get;;
+  # NOTE: "aptitude" doesn't have this functionality
+  # so we use "${_APTMGR}" to get package URI's
+  case "$(basename "${_APTMGR}")" in
+    'apt'|'apt-get') uri_mgr="${_APTMGR}";;
+    *) uri_mgr='apt-get';;
   esac
   uris_full="$("$uri_mgr" "${APT_SCRIPT_WARNING[@]}" -y --print-uris "$@")"
   CLEANUP_STATE="$?"
@@ -463,7 +462,7 @@ fi
 
 # Disable script warning if apt is used.
 APT_SCRIPT_WARNING=()
-if [ "$_APTMGR" == "apt" ]; then
+if [ "$(basename "${_APTMGR}")" == 'apt' ]; then
     APT_SCRIPT_WARNING=(-o "Apt::Cmd::Disable-Script-Warning=true")
 fi
 
@@ -601,7 +600,7 @@ if [ "$option" == "install" ]; then
   fi
 
   # different problem resolving for aptitude
-  if [ -z "$DOWNLOAD_ONLY" ] || [ "$_APTMGR" == "aptitude" ]; then
+  if [ -z "$DOWNLOAD_ONLY" ] || [ "$(basename "${_APTMGR}")" == 'aptitude' ]; then
     "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
   fi
 
@@ -630,7 +629,7 @@ elif [ "$option" == "download" ]; then
   fi
 
   # different problem resolving for aptitude
-  if [ "$_APTMGR" == "aptitude" ]; then
+  if [ "$(basename "${_APTMGR}")" == 'aptitude' ]; then
     "${_APTMGR}" "$@"
   fi
 

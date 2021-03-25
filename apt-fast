@@ -111,7 +111,6 @@ if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
             "$0" "$@"
 fi
 
-
 # Define lockfile.
 # Use /tmp as directory because everybody (not only root) has to have write
 # permissions.
@@ -123,6 +122,7 @@ LCK_FD=99
 # Set default package manager, APT cache, temporary download dir,
 # temporary download list file, and maximal parallel downloads
 _APTMGR="${real_APT}"
+
 eval "$(apt-config shell APTCACHE Dir::Cache::archives/d)"
 # Check if APT config option Dir::Cache::archives::apt-fast-partial is set.
 eval "$(apt-config shell apt_fast_partial Dir::Cache::archives::apt-fast-partial/d)"

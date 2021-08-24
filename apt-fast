@@ -135,7 +135,7 @@ fi
 # Currently not needed.
 eval "$(apt-config shell LISTDIR Dir::State::lists/d)"
 DLLIST="/tmp/apt-fast.list"
-MIRRORLIST="/tmp/apt-file-mirror.list"
+MIRRORLIST="/tmp/apt-fast-mirror.list"
 _MAXNUM=5
 _MAXCONPERSRV=10
 _SPLITCON=8
@@ -299,7 +299,7 @@ handle_mirror()
       (*)
         # Well, gotta fetch...
         if [[ $protocol == mirror ]]; then protocol=mirror+http; fi
-        aria2c -d "${MIRRORLIST%/*}" -o "${MIRRORLIST##*/}" "${protocol#mirror+}:${path}"
+        aria2c -q -d "${MIRRORLIST%/*}" -o "${MIRRORLIST##*/}" -- "${protocol#mirror+}:${path}"
         mirrorfile="${MIRRORLIST}";;
     esac
 

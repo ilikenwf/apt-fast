@@ -263,7 +263,7 @@ cleanup_aptfast()
 {
   local last_exit_code=$?
   [ "$CLEANUP_STATE" -eq 0 ] && CLEANUP_STATE=$last_exit_code
-  cleanup_list "$DLLIST" downloa
+  cleanup_list "$DLLIST" download
   _remove_lock
 }
 

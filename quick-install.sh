@@ -2,7 +2,7 @@
 set -e
 
 apt_fast_installation() {
-  if ! dpkg-query --show aria2 >/dev/null 2>&1; then
+  if ! type aria2c >/dev/null 2>&1; then
     sudo apt-get update
     sudo apt-get install -y aria2
   fi

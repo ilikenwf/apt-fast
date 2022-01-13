@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# apt-fast v1.9.11
+# apt-fast v1.9.12
 # Use this just like aptitude or apt-get for faster package downloading.
 #
 # Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com

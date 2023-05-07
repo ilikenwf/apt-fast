@@ -65,21 +65,25 @@ You can use the Ubuntu PPA to get a graphical configuration file setup and autom
 Some distros, such as PCLinuxOS include apt-fast in their repositories. However if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.list`:
 
 ```
-deb http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main 
-deb-src http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main
+deb http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main 
+deb-src http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main
 ```
 
-To install apt-fast execute following commands as root:
+Note that the PPA version `jammy` might need to be updated with the recent Ubuntu LTS codename to stay up-to-date.
+See the [release list](https://wiki.ubuntu.com/Releases) for possible LTS codenames to try.
+
+Then, execute following commands [^apt-key] as root to install apt-fast:
+
 ```bash
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B
+wget 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B' -O /etc/apt/trusted.gpg.d/apt-fast.asc
 apt-get update
 apt-get install apt-fast
 ```
 
-Note that the PPA version ``bionic`` might need to be updated with the recent Ubuntu LTS codename to stay up-to-date.
-
+[^apt-key]: `apt-key` is deprecated and replaced by simply writing keys to files in `/etc/apt/trusted.gpg.d`.
 
 ### Interaction-free installation ###
+
 To install apt-fast without interaction execute the following commands as root after adding the package sources to the sources.list:
 
 ```bash
@@ -93,7 +97,6 @@ echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections
 echo debconf apt-fast/dlflag boolean true | debconf-set-selections
 echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections
 ```
-
 
 ### Quick install ###
 You can quickly install `apt-fast` by running:

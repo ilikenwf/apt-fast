@@ -65,18 +65,18 @@ You can use the Ubuntu PPA to get a graphical configuration file setup and autom
 Some distros, such as PCLinuxOS include apt-fast in their repositories. However if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.list`:
 
 ```
-deb http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main 
-deb-src http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main
+deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main
 ```
 
 To install apt-fast execute following commands as root:
 ```bash
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B | gpg --dearmor -o /etc/apt/keyrings/apt-fast.gpg
 apt-get update
 apt-get install apt-fast
 ```
 
-Note that the PPA version ``bionic`` might need to be updated with the recent Ubuntu LTS codename to stay up-to-date.
+Note that the PPA version ``jammy`` might need to be updated with the recent Ubuntu LTS codename to stay up-to-date.
 
 
 ### Interaction-free installation ###

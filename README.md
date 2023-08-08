@@ -187,14 +187,21 @@ Official mirror lists:
 * Debian: http://www.debian.org/mirror/list
 * Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
 
-Then add them to whitespace and comma separated list in config file, e.g.:
+Then add them to space and/or comma separated list in config file, e.g.:
 
 ```sh
-MIRRORS=( 'http://deb.debian.org/debian','http://ftp.debian.org/debian, http://ftp2.de.debian.org/debian, http://ftp.de.debian.org/debian, ftp://ftp.uni-kl.de/debian' )
+MIRRORS=(
+  'http://deb.debian.org/debian','http://ftp.debian.org/debian, http://ftp2.de.debian.org/debian, http://ftp.de.debian.org/debian ftp://ftp.uni-kl.de/debian'
+)
 ```
 
+If you are using multiple distributions (such as Ubuntu PPA on Debian or other 3rd-party repoitories), you can simply add one more list into this array of lists:
+
 ```sh
-MIRRORS=( 'http://archive.ubuntu.com/ubuntu, http://de.archive.ubuntu.com/ubuntu, http://ftp.halifax.rwth-aachen.de/ubuntu, http://ftp.uni-kl.de/pub/linux/ubuntu, http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
+MIRRORS=(
+  'http://deb.debian.org/debian http://ftp.debian.org/debian http://ftp2.de.debian.org/debian http://ftp.de.debian.org/debian ftp://ftp.uni-kl.de/debian'
+  'http://archive.ubuntu.com/ubuntu http://de.archive.ubuntu.com/ubuntu http://ftp.halifax.rwth-aachen.de/ubuntu http://ftp.uni-kl.de/pub/linux/ubuntu http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/'
+)
 ```
 
 *NOTE:* To use any mirrors you may have in sources.list or sources.list.d you will need to add them to the apt-fast.conf mirror list as well!
@@ -303,3 +310,4 @@ Special thanks
  * Sergio Silva - test to see if axel is installed, root detection/sudo autorun, lock file check/creation
  * Waldemar {BOB}{Burnfaker} Wetzel - lockfile improvements, separate config file
  * maclarke - locking improvements
+ * artoria2e5 - apt-file-mirror support

@@ -1,5 +1,5 @@
 <!---
-apt-fast v1.9
+apt-fast v1.10
 Use this just like aptitude or apt-get for faster package downloading.
 
 Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
@@ -264,6 +264,13 @@ Directory where apt-fast (temporarily) downloads the packages.
 APTCACHE='/var/cache/apt/archives'
 ```
 Directory where apt-get and aptitude download packages.
+
+
+### APT authentication ###
+```sh
+APT_FAST_APT_AUTH=1
+```
+Try to authenticate packages from sources that require login.
 
 
 ### Verbose output ###

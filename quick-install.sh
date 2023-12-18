@@ -1,25 +1,25 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-apt_fast_installation() {
-  if ! type aria2c >/dev/null 2>&1; then
-    sudo apt-get update
-    sudo apt-get install -y aria2
-  fi
+if [ -n "$EUID" ]; then userid="$EUID"; else userid="$(id -u)"; fi
 
-  wget https://raw.githubusercontent.com/ilikenwf/apt-fast/master/apt-fast -O /usr/local/sbin/apt-fast
-  chmod +x /usr/local/sbin/apt-fast
-  if ! [[ -f /etc/apt-fast.conf ]]; then
-    wget https://raw.githubusercontent.com/ilikenwf/apt-fast/master/apt-fast.conf -O /etc/apt-fast.conf
-  fi
+run_cmd() {
+  [ "$userid" -ne 0 ] && set -- sudo "$@"
+  "$@"
 }
+apt_fast_url='https://raw.githubusercontent.com/ilikenwf/apt-fast/master'
 
-
-if [[ "$EUID" -eq 0 ]]; then
-  apt_fast_installation
-else
+if [ "$userid" -ne 0 ]; then
   type sudo >/dev/null 2>&1 || { echo "sudo not installed, change into root context" >&2; exit 1; }
+fi
 
-  DECL="$(declare -f apt_fast_installation)"
-  sudo bash -c "$DECL; apt_fast_installation"
+if ! type aria2c >/dev/null 2>&1; then
+  run_cmd apt-get update
+  run_cmd apt-get install -y aria2
+fi
+
+run_cmd wget "$apt_fast_url"/apt-fast -O /usr/local/sbin/apt-fast
+run_cmd chmod +x /usr/local/sbin/apt-fast
+if [ ! -f /etc/apt-fast.conf ]; then
+  run_cmd wget "$apt_fast_url"/apt-fast.conf -O /etc/apt-fast.conf
 fi

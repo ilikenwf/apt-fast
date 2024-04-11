@@ -71,7 +71,7 @@ deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast
 To install apt-fast execute following commands as root:
 ```bash
 mkdir -p /etc/apt/keyrings
-curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B | gpg --dearmor -o /etc/apt/keyrings/apt-fast.gpg
+curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B" | gpg --dearmor -o /etc/apt/keyrings/apt-fast.gpg
 apt-get update
 apt-get install apt-fast
 ```

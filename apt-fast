@@ -400,21 +400,17 @@ get_uris(){
     exit
   fi
   prepare_auth
-  while read -r pkg_uri_info
+  ## --print-uris format is:
+  # 'fileurl' filename filesize checksum_hint:filechecksum
+  while IFS=' ' read -r uri filename filesize checksum_string _
   do
-    [ -z "$pkg_uri_info" ] && continue
-    ## --print-uris format is:
-    # 'fileurl' filename filesize checksum_hint:filechecksum
-    uri="$(get_auth "$(echo "$pkg_uri_info" | cut -d' ' -f1 | tr -d "'")")"
-    filename="$(echo "$pkg_uri_info" | cut -d' ' -f2)"
-    filesize="$(echo "$pkg_uri_info" | cut -d' ' -f3)"
-    checksum_string="$(echo "$pkg_uri_info" | cut -d' ' -f4)"
-    hash_algo="$(echo "$checksum_string" | cut -d':' -f1)"
-    checksum="$(echo "$checksum_string" | cut -d':' -f2)"
+    [ -z "$uri" ] && continue
+    uri="$(get_auth "${uri//"'"/}")"
+    IFS=':' read -r hash_algo checksum _ <<<"$checksum_string"
 
     filename_decoded="$(urldecode "$filename")"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$(echo "$filename_decoded" | cut -d'_' -f1)"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY} $(echo "$filename_decoded" | cut -d'_' -f2)"
+    IFS='_' read -r pkg_name_decoded pkg_version_decoded _ <<<"$filename_decoded"
+    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$pkg_name_decoded $pkg_version_decoded"
     DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY} $(echo "$filesize" | numfmt --to=iec-i --suffix=B)\n"
     DOWNLOAD_SIZE=$((DOWNLOAD_SIZE + filesize))
 
@@ -440,32 +436,34 @@ get_uris(){
       # Therefore, this code expects package-name_version_arch.deb Otherways
       # below code will fail resoundingly
       if [ -z "$hash_algo" ]; then
-        pkg_name="$(echo "$filename" | cut -d'_' -f1)"
-        pkg_version="$(echo "$filename" | cut -d'_' -f2)"
-        pkg_version="$(urldecode "$pkg_version")"
+        IFS='_' read -r pkg_name _ <<<"$filename"
+        pkg_version="$pkg_version_decoded"
         package_info="$(apt-cache show "$pkg_name=$pkg_version")"
 
-        patch_checksum=
-        if [ -n "$SHA512_SUPPORTED" ]; then
-          patch_checksum="$(echo "$package_info" | grep SHA512 | head -n 1)"
-          [ -n "$patch_checksum" ] && hash_algo="sha-512"
-        fi
-        if [ -z "$patch_checksum" ] && [ -n "$SHA256_SUPPORTED" ]; then
-          patch_checksum="$(echo "$package_info" | grep SHA256 | head -n 1)"
-          [ -n "$patch_checksum" ] && hash_algo="sha-256"
-        fi
-        if [ -z "$patch_checksum" ] && [ -n "$SHA1_SUPPORTED" ]; then
-          patch_checksum="$(echo "$package_info" | grep SHA1 | head -n 1)"
-          [ -n "$patch_checksum" ] && hash_algo="sha-1"
-        fi
-        if [ -z "$patch_checksum" ] && [ -n "$MD5sum_SUPPORTED" ]; then
-          patch_checksum="$(echo "$package_info" | grep MD5sum | head -n 1)"
-          [ -n "$patch_checksum" ] && hash_algo="md5"
-        fi
+        while IFS=': ' read -r field checksum _
+        do
+          case "$field" in
+            SHA512)
+              [ -n "$SHA512_SUPPORTED" ] || continue
+              hash_algo="sha-512"
+              break ;;
+            SHA256)
+              [ -n "$SHA256_SUPPORTED" ] || continue
+              hash_algo="sha-256"
+              break ;;
+            SHA1)
+              [ -n "$SHA1_SUPPORTED" ] || continue
+              hash_algo="sha-1"
+              break ;;
+            MD5sum)
+              [ -n "$MD5sum_SUPPORTED" ] || continue
+              hash_algo="md5"
+              break ;;
+          esac
+        done <<<"$package_info"
 
-        if [ -n "$patch_checksum" ]; then
-          checksum="$(echo "$patch_checksum" | cut -d' ' -f2)"
-        else
+        if [ -z "$hash_algo" ]; then
+          checksum=
           msg "Couldn't get supported checksum for $pkg_name ($pkg_version)." "warning"
           REMOVE_WORKING_MESSAGE=
         fi
@@ -496,11 +494,8 @@ display_downloadfile(){
     DISPLAY_SORT_OPTIONS=(-k 1,1)
     # Sort output after package download size (decreasing):
     #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
-    while read -r line; do
-        [ -z "$line" ] && continue
-        pkg="$(echo "$line" | cut -d' ' -f1)"
-        ver="$(echo "$line" | cut -d' ' -f2)"
-        size="$(echo "$line" | cut -d' ' -f3)"
+    while IFS=' ' read -r pkg ver size _; do
+        [ -z "$pkg" ] && continue
         printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
     done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
   fi

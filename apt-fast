@@ -37,7 +37,7 @@ msg(){
 }
 
 # Search for known options and decide if root privileges are needed.
-root=1  # default value: we need root privileges
+root=$#
 option=
 for argument in "$@"; do
   case "$argument" in
@@ -55,7 +55,7 @@ for argument in "$@"; do
       option="source"
       root=0
       ;;
-    changelog | show)
+    changelog | show | help | --help | -h)
       root=0
       ;;
   esac
@@ -88,7 +88,7 @@ TMP_https_proxy="${https_proxy-${TMP_RANDOM}}"
 
 # Check for proper privileges.
 # Call explicitly with environment variables to get them into root conext.
-if [ "$root" = 1 ] && [ "$UID" != 0 ]; then
+if [ "$root" -ne 0 ] && [ "$UID" != 0 ]; then
   exec sudo DEBUG="$DEBUG" \
             LCK_FILE="$TMP_LCK_FILE" \
             DOWNLOADBEFORE="$TMP_DOWNLOADBEFORE" \

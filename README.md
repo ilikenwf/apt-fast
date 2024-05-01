@@ -12,7 +12,7 @@ version 3 of the License, or (at your option) any later version.
 
 apt-fast 1.9
 ============
-apt-fast is a shellscript wrapper for apt-get and aptitude that can drastically improve apt download times by downloading packages in parallel, with multiple connections per package.
+apt-fast is a shell script wrapper for apt-get and aptitude that can drastically improve apt download times by downloading packages in parallel, with multiple connections per package.
 
 ## Table of Contents
 
@@ -62,13 +62,14 @@ You can use the Ubuntu PPA to get a graphical configuration file setup and autom
 
 
 ### Debian and derivates ###
-Some distros, such as PCLinuxOS include apt-fast in their repositories. However if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.list`:
+Some distros, such as PCLinuxOS, include apt-fast in their repositories. However, if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.list`:
 
 ```
 deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main
 ```
 
-To install apt-fast execute following commands as root:
+To retrieve the signed keys and install apt-fast, execute the following commands as root:
+
 ```bash
 mkdir -p /etc/apt/keyrings
 curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xA2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B" | gpg --dearmor -o /etc/apt/keyrings/apt-fast.gpg
@@ -77,16 +78,16 @@ apt-get install apt-fast
 ```
 
 Note that the PPA version ``jammy`` might need to be updated with the recent Ubuntu LTS codename to stay up-to-date.
-
+See the [release list](https://wiki.ubuntu.com/Releases) for possible LTS codenames to try.
 
 ### Interaction-free installation ###
-To install apt-fast without interaction execute the following commands as root after adding the package sources to the sources.list:
+To install apt-fast without interaction, execute the following commands as root after adding the package sources to the `sources.list` as instructed above:
 
 ```bash
 DEBIAN_FRONTEND=noninteractive apt-get install -y apt-fast
 ```
 
-To update specific configuration values use the debconf command line interface as root, e.g.:
+To update specific configuration values, use the debconf command line interface as root, e.g.:
 
 ```bash
 echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections
@@ -117,11 +118,11 @@ You need to have [aria2c](http://aria2.sourceforge.net/) installed:
 apt-get install aria2
 ```
 
-Then simply run apt-fast instead of apt-get or aptitude.
+Then run `apt-fast` instead of `apt-get` or `aptitude`.
 
 
 ### Autocompletion ###
-The completions for the respective shells use the existing apt-get completion. It is required to have the apt-get completion installed. In case of Bash the package `bash-completion` is required. For Zsh and Fish required completions are included by default (in their `*-common` packages).
+The completions for the respective shells use the existing apt-get completion. It is required that the apt-get completion be installed. In the case of Bash, the package `bash-completion` is required. For Zsh and Fish, the required completions are included by default (in their `*-common` packages).
 
 #### Bash ####
 
@@ -168,26 +169,26 @@ The apt-fast configuration file is located at: `/etc/apt-fast.conf`
 ```sh
 _APTMGR=apt-get
 ```
-Change package manager used for installation. Supported are apt-get, aptitude, apt.
+Change package manager used for installation. Supported are `apt-get`, `aptitude`, `apt`.
 
-Note: When using Linux Mint, don't use apt because the distributor provides a custom shell script with different functionality unsupported by apt-fast.
+Note: When using Linux Mint, don't use `apt` because the distributor provides a custom shell script with different functionality unsupported by apt-fast.
 
 
 ### Confirmation dialog ###
 ```sh
 DOWNLOADBEFORE=true
 ```
-To suppress apt-fast confirmation dialog and download packages directly set this to any value. To ask for confirmation, leave empty. This options doesn't affect package manager confirmation.
+Set this to any value to suppress the apt-fast confirmation dialog and download packages directly. Leave empty to ask for confirmation. This option doesn't affect package manager confirmation.
 
 
 ### Multiple mirrors ###
-Adding multiple mirrors will further speed up downloads and distribute load, be sure to add mirrors near to your location.
+Adding multiple mirrors will further speed up downloads and distribute load. Be sure to add mirrors near your location.
 Official mirror lists:
 
-* Debian: http://www.debian.org/mirror/list
-* Ubuntu: https://launchpad.net/ubuntu/+archivemirrors
+* Debian: <http://www.debian.org/mirror/list>
+* Ubuntu: <https://launchpad.net/ubuntu/+archivemirrors>
 
-Then add them to whitespace and comma separated list in config file, e.g.:
+Then add them to the whitespace- and comma-separated list in the config file, e.g.:
 
 ```sh
 MIRRORS=( 'http://deb.debian.org/debian','http://ftp.debian.org/debian, http://ftp2.de.debian.org/debian, http://ftp.de.debian.org/debian, ftp://ftp.uni-kl.de/debian' )
@@ -197,49 +198,49 @@ MIRRORS=( 'http://deb.debian.org/debian','http://ftp.debian.org/debian, http://f
 MIRRORS=( 'http://archive.ubuntu.com/ubuntu, http://de.archive.ubuntu.com/ubuntu, http://ftp.halifax.rwth-aachen.de/ubuntu, http://ftp.uni-kl.de/pub/linux/ubuntu, http://mirror.informatik.uni-mannheim.de/pub/linux/distributions/ubuntu/' )
 ```
 
-*NOTE:* To use any mirrors you may have in sources.list or sources.list.d you will need to add them to the apt-fast.conf mirror list as well!
+*NOTE:* To use any mirrors you may have in `sources.list` or `sources.list.d`, you will need to add them to the `apt-fast.conf` mirror list as well!
 
 
 ### Maximum connections ###
 ```sh
 _MAXNUM=5
 ```
-Set to maximum number of connections aria2c uses.
+Set to the maximum number of connections aria2c uses.
 
 
 ### Maximum connections per server ###
 ```sh
 _MAXCONPERSRV=10
 ```
-Set to maximum number of connections per server aria2c uses.
+Set to the maximum number of connections per server aria2c uses.
 
 
 ### Maximum connections per file ###
 ```sh
 _SPLITCON=8
 ```
-Set to maximum number of connections per file aria2c uses.
+Set to the maximum number of connections per file aria2c uses.
 
 
 ### File split size ###
 ```sh
 _MINSPLITSZ=1M
 ```
-Set to size of each split piece. Possible values: 1M-1024M
+Set to the size of each split piece. Possible values: 1M-1024M
 
 
 ### Piece selection algorithm ###
 ```sh
 _PIECEALGO=default
 ```
-Set to piece selection algorithm to use. Possible values: default, inorder, geom
+Set to the piece selection algorithm to use. Possible values: `default`, `inorder`, `geom`
 
 
 ### Downloadmanager file ###
 ```sh
 DLLIST='/tmp/apt-fast.list'
 ```
-Location of aria2c input file, used to download the packages with options and checksums.
+Location of the aria2c input file, used to download the packages with options and checksums.
 
 
 ### Downloadmanager command ###

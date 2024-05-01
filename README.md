@@ -1,5 +1,5 @@
 <!---
-apt-fast v1.10
+apt-fast v1.11
 Use this just like aptitude or apt-get for faster package downloading.
 
 Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com

@@ -433,12 +433,13 @@ get_uris(){
       # Using apt-cache show package=version to ensure recover single and
       # correct package version.
       # Warning: assuming that package naming uses '_' as field separator.
-      # Therefore, this code expects package-name_version_arch.deb Otherways
+      # Therefore, this code expects package-name_version_arch.deb Otherwise
       # below code will fail resoundingly
       if [ -z "$hash_algo" ]; then
         IFS='_' read -r pkg_name _ <<<"$filename"
         pkg_version="$pkg_version_decoded"
-        package_info="$(apt-cache show "$pkg_name=$pkg_version")"
+        # Transform multi-line field output from apt-cache to single line and sort checksums, strongest first
+        package_info="$(apt-cache show "$pkg_name=$pkg_version" | sed ':r;$!{N;br};s/\n / /g' | sort -r)"
 
         while IFS=': ' read -r field checksum _
         do
@@ -483,7 +484,6 @@ get_uris(){
   done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")"
 
   #cat "$DLLIST"
-  #LCK_RM
   #exit
 }
 

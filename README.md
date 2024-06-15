@@ -65,7 +65,7 @@ You can use the Ubuntu PPA to get a graphical configuration file setup and autom
 Some distros, such as PCLinuxOS, include apt-fast in their repositories. However, if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.list`:
 
 ```
-deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu jammy main
+deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu focal main
 ```
 
 To retrieve the signed keys and install apt-fast, execute the following commands as root:

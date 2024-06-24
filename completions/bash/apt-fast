@@ -1,2 +1,6 @@
 _completion_loader apt-get
-complete -F _apt_get apt-fast
+if declare -F _comp_cmd_apt_get >/dev/null; then
+    complete -F _comp_cmd_apt_get apt-fast
+else
+    complete -F _apt_get apt-fast
+fi

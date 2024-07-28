@@ -1,2 +1,12 @@
 #compdef apt-fast
-compdef _apt apt-fast=apt-get
+
+_APTMGR=apt-get
+if [ -f /etc/apt-fast.conf ]; then
+    source /etc/apt-fast.conf
+fi
+_APTMGR="${_APTMGR%% *}"
+if ! type "${_APTMGR}" &>/dev/null; then
+    _APTMGR=apt-get
+fi
+
+compdef apt-fast="${_APTMGR}"

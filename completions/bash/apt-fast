@@ -1,6 +1,16 @@
-_completion_loader apt-get
-if declare -F _comp_cmd_apt_get >/dev/null; then
-    complete -F _comp_cmd_apt_get apt-fast
-else
-    complete -F _apt_get apt-fast
+_APTMGR=apt-get
+if [ -f /etc/apt-fast.conf ]; then
+    source /etc/apt-fast.conf
+fi
+_APTMGR="${_APTMGR%% *}"
+if ! type "${_APTMGR}" &>/dev/null; then
+    _APTMGR=apt-get
+fi
+completion_cmd="${_APTMGR//-/_}"
+
+_completion_loader "${_APTMGR}"
+if declare -F "_comp_cmd_${completion_cmd}" >/dev/null; then
+    complete -F "_comp_cmd_${completion_cmd}" apt-fast
+elif declare -F "_${completion_cmd}" >/dev/null; then
+    complete -F "_${completion_cmd}" apt-fast
 fi

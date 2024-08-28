@@ -55,7 +55,7 @@ for argument in "$@"; do
       option="source"
       root=0
       ;;
-    changelog | show | help | --help | -h)
+    changelog | list | show | help | --help | -h)
       root=0
       ;;
   esac

@@ -174,6 +174,8 @@ VERBOSE_OUTPUT=
 # Download command.
 _DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} -i ${DLLIST} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --connect-timeout=600 --timeout=600 -m0 --header "Accept: */*"'
 
+KERNEL="$(uname)"
+
 # Load config file.
 for Prefix in /usr/local/etc /etc; do
     CONFFILE=${Prefix}/apt-fast.conf
@@ -238,7 +240,12 @@ fi
 _create_lock()
 {
     eval "exec $LCK_FD>\"$LCK_FILE.lock\""
-    flock -n $LCK_FD || { msg_already_running; exit 1; }
+
+    if [ $KERNEL = 'Linux' ]; then
+      flock -n $LCK_FD
+    else
+      shlock -f "$LCK_FILE.lock" -p $$
+    fi || { msg_already_running; exit 1; }
 
     trap "cleanup_aptfast; exit_cleanup_state" EXIT
     trap "cleanup_aptfast; exit 1" INT TERM
@@ -247,7 +254,8 @@ _create_lock()
 # unlock and remove the lock file
 _remove_lock()
 {
-    flock -u "$LCK_FD" 2>/dev/null
+    if [ $KERNEL = 'Linux' ]; then
+      flock -u "$LCK_FD" 2>/dev/null
     rm -f "$LCK_FILE.lock"
 }
 

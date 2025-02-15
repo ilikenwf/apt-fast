@@ -244,7 +244,7 @@ _create_lock()
     if [ $KERNEL = 'Linux' ]; then
       flock -n $LCK_FD
     else
-      chflags -v uchg,schg "$LCK_FILE.lock"
+      shlock -f "$LCK_FILE.lock" -p $$
     fi || { msg_already_running; exit 1; }
 
     trap "cleanup_aptfast; exit_cleanup_state" EXIT
@@ -256,9 +256,6 @@ _remove_lock()
 {
     if [ $KERNEL = 'Linux' ]; then
       flock -u "$LCK_FD" 2>/dev/null
-    else
-      chflags nouchg,noschg "$LCK_FILE.lock"
-    fi
     rm -f "$LCK_FILE.lock"
 }
 

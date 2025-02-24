@@ -15,13 +15,7 @@ shopt -s nullglob
 
 [ -n "$DEBUG" ] && set -xv
 
-function run_in_parallel {
-    local max_jobs=$(nproc 2>/dev/null || echo 1)
-    while [ $(jobs -p | wc -l) -ge "$max_jobs" ]; do
-        sleep 1
-    done
-    "$@" &
-}
+THREADS=$(nproc 2>/dev/null || echo 4)
 
 # Print colored messages.
 # Usage: msg "message text" "message type" "optional: err"
@@ -415,9 +409,9 @@ get_uris(){
   ## --print-uris format is:
   # 'fileurl' filename filesize checksum_hint:filechecksum
   process_package() {
-    local pkg_uri_info="$1"
-    local tmpfile=$(mktemp -p "$tmpdir")
+    local pkg_uri_info="$@"
 
+    local display_line=""
 
     IFS=' ' read -r uri filename filesize checksum_string _ <<<"$pkg_uri_info"
     [ -z "$uri" ] && continue
@@ -507,13 +501,26 @@ get_uris(){
     echo "$display_line" >> "$tmpdir/display"
     echo "$filesize" >> "$tmpdir/sizes"
   }
-  # Parallel init
-  while read -r pkg_uri_info; do
-    [ -z "$pkg_uri_info" ] && continue
+  # Init jobs
+  mapfile -t pkg_uri_list < <(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")
+  total_pkgs=${#pkg_uri_list[@]}
+  threads=${THREADS:-4}  
+  per_thread=$(( (total_pkgs + threads - 1) / threads ))  
 
-    run_in_parallel process_package "$pkg_uri_info"
-  done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")"
-
+  # Split links
+  for ((i=0; i<threads; i++)); do
+    start=$((i * per_thread))
+    end=$((start + per_thread -1))
+    [ $end -ge $total_pkgs ] && end=$((total_pkgs -1))
+    
+    # Launch jobs
+    (
+      for ((j=start; j<=end; j++)); do
+        [ -z "${pkg_uri_list[j]}" ] && continue
+        process_package "${pkg_uri_list[j]}"
+      done
+    ) &
+  done
   # Wait for background jobs
   wait
 

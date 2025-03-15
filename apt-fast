@@ -281,13 +281,6 @@ exit_cleanup_state()
   exit $CLEANUP_STATE
 }
 
-# decode url string
-# translates %xx but must not convert '+' in spaces
-urldecode()
-{
-    printf '%b' "${1//%/\\x}"
-}
-
 # Check if mirrors are available. And if so add all mirrors to download list.
 get_mirrors(){
   # Check all mirror lists.
@@ -408,7 +401,15 @@ get_uris(){
     uri="$(get_auth "${uri//"'"/}")"
     IFS=':' read -r hash_algo checksum _ <<<"$checksum_string"
 
-    filename_decoded="$(urldecode "$filename")"
+    if [[ "$filename" == *%* ]]; then
+      # decode url string
+      # translates %xx but must not convert '+' in spaces
+      filename_decoded="$(printf '%b' "${filename//%/\\x}")"
+    else
+      # most filenames do not contain %, so skip decoding them to improve the performance.
+      # the overhead of decoding is >1ms due to the use of subshell and printf, while the one of assignment is ~1us.
+      filename_decoded="$filename"
+    fi
     IFS='_' read -r pkg_name_decoded pkg_version_decoded _ <<<"$filename_decoded"
     DOWNLOAD_DISPLAY+="$pkg_name_decoded $pkg_version_decoded $filesize\n"
     ((DOWNLOAD_SIZE += filesize))

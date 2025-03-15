@@ -330,15 +330,15 @@ prepare_auth(){
       AUTH_INFO_PARSED+=("$machine $login $password")
     done <<< "$auth_info"
   done
+  if [ "${#AUTH_INFO_PARSED[@]}" -eq 0 ]; then
+    # acts like auth disabled when no auth info is provided to improve performance
+    APT_FAST_APT_AUTH=0
+  fi
 }
 
 # Gets URI as parameter and tries to add basic http credentials. Will fail on
 # credentials that contain characters that need URL-encoding.
 get_auth(){
-  if [ "$APT_FAST_APT_AUTH" -eq 0 ]; then
-    echo "$1"
-    return
-  fi
   for auth_info in "${AUTH_INFO_PARSED[@]}"; do
     # convert to array, don't escape variable here
     auth_info_arr=($auth_info)
@@ -398,7 +398,8 @@ get_uris(){
   while IFS=' ' read -r uri filename filesize checksum_string _
   do
     [ -z "$uri" ] && continue
-    uri="$(get_auth "${uri//"'"/}")"
+    uri="${uri//"'"/}"
+    [ "$APT_FAST_APT_AUTH" -ne 0 ] && uri="$(get_auth "$uri")"
     IFS=':' read -r hash_algo checksum _ <<<"$checksum_string"
 
     if [[ "$filename" == *%* ]]; then

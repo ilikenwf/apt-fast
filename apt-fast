@@ -410,8 +410,8 @@ get_uris(){
 
     filename_decoded="$(urldecode "$filename")"
     IFS='_' read -r pkg_name_decoded pkg_version_decoded _ <<<"$filename_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$pkg_name_decoded $pkg_version_decoded $filesize\n"
-    DOWNLOAD_SIZE=$((DOWNLOAD_SIZE + filesize))
+    DOWNLOAD_DISPLAY+="$pkg_name_decoded $pkg_version_decoded $filesize\n"
+    ((DOWNLOAD_SIZE += filesize))
 
     ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
     # plain aptitude do not decode it when download and install it. Therefore, we

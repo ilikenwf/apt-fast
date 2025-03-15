@@ -410,8 +410,7 @@ get_uris(){
 
     filename_decoded="$(urldecode "$filename")"
     IFS='_' read -r pkg_name_decoded pkg_version_decoded _ <<<"$filename_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$pkg_name_decoded $pkg_version_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY} $(echo "$filesize" | numfmt --to=iec-i --suffix=B)\n"
+    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$pkg_name_decoded $pkg_version_decoded $filesize\n"
     DOWNLOAD_SIZE=$((DOWNLOAD_SIZE + filesize))
 
     ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
@@ -494,12 +493,13 @@ display_downloadfile(){
     DISPLAY_SORT_OPTIONS=(-k 1,1)
     # Sort output after package download size (decreasing):
     #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
+    DISPLAY_NUMFMT_OPTIONS=(--to=iec-i --suffix=B)
     while IFS=' ' read -r pkg ver size _; do
         [ -z "$pkg" ] && continue
         printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
-    done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
+    done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}" | numfmt "${DISPLAY_NUMFMT_OPTIONS[@]}" --field=3)"
   fi
-  msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)" "normal"
+  msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt "${DISPLAY_NUMFMT_OPTIONS[@]}")" "normal"
 }
 
 # Create and insert a PID number to lockfile.

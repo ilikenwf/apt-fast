@@ -138,7 +138,9 @@ APTAUTHFILES=()
 if [ -f "$NETRC" ]; then
     APTAUTHFILES=("$NETRC")
 fi
-APTAUTHFILES+=("$NETRCDIR"*)
+if [ -d "$NETRCDIR" ]; then
+    APTAUTHFILES+=("$NETRCDIR"/*)
+fi
 
 DLLIST="/tmp/apt-fast.list"
 _MAXNUM=5

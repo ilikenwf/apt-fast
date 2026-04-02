@@ -62,10 +62,14 @@ You can use the Ubuntu PPA to get a graphical configuration file setup and autom
 
 
 ### Debian and derivates ###
-Some distros, such as PCLinuxOS, include apt-fast in their repositories. However, if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.list`:
+Some distros, such as PCLinuxOS, include apt-fast in their repositories. However, if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.sources`:
 
 ```
-deb [signed-by=/etc/apt/keyrings/apt-fast.gpg] http://ppa.launchpad.net/apt-fast/stable/ubuntu focal main
+Types: deb
+URIs: https://ppa.launchpadcontent.net/apt-fast/stable/ubuntu/
+Suites: focal
+Components: main 
+Signed-By: /etc/apt/keyrings/apt-fast.gpg
 ```
 
 To retrieve the signed keys and install apt-fast, execute the following commands as root:

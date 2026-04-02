@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# apt-fast v1.10.0
+# apt-fast v1.11.0
 # Use this just like aptitude or apt-get for faster package downloading.
 #
-# Copyright: 2008-2012 Matt Parnell, http://www.mattparnell.com
+# Copyright: 2008-2012 Matt Parnell
 # Improvements, maintenance, revisions - 2012, 2017-2019 Dominique Lasserre
 #
 # You may distribute this file under the terms of the GNU General
@@ -55,7 +55,8 @@ for argument in "$@"; do
       option="source"
       root=0
       ;;
-    changelog | list | show | help | --help | -h)
+    changelog | list | show | search | help | --help | -h)
+      option="readonly"
       root=0
       ;;
   esac
@@ -229,10 +230,12 @@ msg_already_running()
   msg "Verify that all apt-fast processes are finished then remove $LCK_FILE.lock and try again." "hint"
 }
 
-# Check if a lock file exists.
-if [ -f "$LCK_FILE.lock" ]; then
-  msg_already_running
-  exit 1
+# Check if a lock file exists (skip for read-only commands).
+if [ "$option" != "readonly" ]; then
+  if [ -f "$LCK_FILE.lock" ]; then
+    msg_already_running
+    exit 1
+  fi
 fi
 
 
@@ -281,13 +284,6 @@ cleanup_aptfast()
 exit_cleanup_state()
 {
   exit $CLEANUP_STATE
-}
-
-# decode url string
-# translates %xx but must not convert '+' in spaces
-urldecode()
-{
-    printf '%b' "${1//%/\\x}"
 }
 
 # Check if mirrors are available. And if so add all mirrors to download list.
@@ -339,15 +335,16 @@ prepare_auth(){
       AUTH_INFO_PARSED+=("$machine $login $password")
     done <<< "$auth_info"
   done
+  if [ "${#AUTH_INFO_PARSED[@]}" -eq 0 ]; then
+    # acts as if auth is disabled when no auth info is provided to improve performance
+    APT_FAST_APT_AUTH=0
+  fi
 }
 
 # Gets URI as parameter and tries to add basic http credentials. Will fail on
 # credentials that contain characters that need URL-encoding.
+# Caller is responsible for checking APT_FAST_APT_AUTH before calling this function.
 get_auth(){
-  if [ "$APT_FAST_APT_AUTH" -eq 0 ]; then
-    echo "$1"
-    return
-  fi
   for auth_info in "${AUTH_INFO_PARSED[@]}"; do
     # convert to array, don't escape variable here
     auth_info_arr=($auth_info)
@@ -407,14 +404,21 @@ get_uris(){
   while IFS=' ' read -r uri filename filesize checksum_string _
   do
     [ -z "$uri" ] && continue
-    uri="$(get_auth "${uri//"'"/}")"
+    uri="${uri//"'"/}"
+    [ "$APT_FAST_APT_AUTH" -ne 0 ] && uri="$(get_auth "$uri")"
     IFS=':' read -r hash_algo checksum _ <<<"$checksum_string"
 
-    filename_decoded="$(urldecode "$filename")"
+    if [[ "$filename" == *%* ]]; then
+      # decode url string
+      # translates %xx but must not convert '+' in spaces
+      filename_decoded="$(printf '%b' "${filename//%/\\x}")"
+    else
+      # most filenames do not contain %, so skip decoding to improve performance
+      filename_decoded="$filename"
+    fi
     IFS='_' read -r pkg_name_decoded pkg_version_decoded _ <<<"$filename_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$pkg_name_decoded $pkg_version_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY} $(echo "$filesize" | numfmt --to=iec-i --suffix=B)\n"
-    DOWNLOAD_SIZE=$((DOWNLOAD_SIZE + filesize))
+    DOWNLOAD_DISPLAY+="$pkg_name_decoded $pkg_version_decoded $filesize\n"
+    ((DOWNLOAD_SIZE += filesize))
 
     ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
     # plain aptitude do not decode it when download and install it. Therefore, we
@@ -496,20 +500,24 @@ display_downloadfile(){
     DISPLAY_SORT_OPTIONS=(-k 1,1)
     # Sort output after package download size (decreasing):
     #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
+    DISPLAY_NUMFMT_OPTIONS=(--to=iec-i --suffix=B)
     while IFS=' ' read -r pkg ver size _; do
         [ -z "$pkg" ] && continue
         printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
-    done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
+    done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}" | numfmt "${DISPLAY_NUMFMT_OPTIONS[@]}" --field=3)"
   fi
   msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)" "normal"
 }
 
-# Create and insert a PID number to lockfile.
-_create_lock
+# Create and insert a PID number to lockfile (skip for read-only commands).
+if [ "$option" != "readonly" ]; then
+  _create_lock
+fi
 
 # Make sure aria2c (in general first parameter from _DOWNLOADER) is available.
+# Read-only commands don't use the downloader.
 CMD="$(echo "$_DOWNLOADER" | sed 's/^\s*\([^ ]\+\).*$/\1/')"
-if [ ! "$(command -v "$CMD")" ]; then
+if [ "$option" != "readonly" ] && [ ! "$(command -v "$CMD")" ]; then
   msg "Command not found: $CMD" "normal" "err"
   msg "You must configure $CONFFILE to use aria2c or another supported download manager" "normal" "err"
   CLEANUP_STATE=1
@@ -536,7 +544,7 @@ SHA256_SUPPORTED=
 SHA1_SUPPORTED=
 MD5sum_SUPPORTED=
 HASH_SUPPORTED=
-if [ "$CMD" == "aria2c" ]; then
+if [ "$option" != "readonly" ] && [ "$CMD" == "aria2c" ]; then
   for supported_hash in $(LC_ALL=C aria2c -v | sed '/^Hash Algorithms:/!d; s/\(^Hash Algorithms: \|,\)\+//g'); do
     case "$supported_hash" in
       sha-512) SHA512_SUPPORTED=y; HASH_SUPPORTED=y ;;
@@ -586,16 +594,19 @@ done
 # Export the variables to make them available in subshells (aka the
 # downloader command).
 eval "$(apt-config shell ftp_proxy Acquire::ftp::proxy)"
-export ftp_proxy
 eval "$(apt-config shell http_proxy Acquire::http::proxy)"
-export http_proxy
 eval "$(apt-config shell https_proxy Acquire::https::proxy)"
-export https_proxy
+# Only export proxy variables if they are non-empty; exporting empty proxy
+# variables can confuse tools like apt-listbugs with "unsupported proxy ''" errors.
+[ -n "$ftp_proxy" ] && export ftp_proxy || unset ftp_proxy
+[ -n "$http_proxy" ] && export http_proxy || unset http_proxy
+[ -n "$https_proxy" ] && export https_proxy || unset https_proxy
 
 # aria2 has no socks support (see https://github.com/aria2/aria2/issues/153)
 if echo "$http_proxy" | grep -q "^socks5h://" || echo "$https_proxy" | grep -q "^socks5h://"; then
   msg "Socks proxy detected. Falling back to ${_APTMGR}" "hint"
   "${_APTMGR}" "${APT_SCRIPT_WARNING[@]}" "$@"
+  CLEANUP_STATE=$?
   exit
 fi
 

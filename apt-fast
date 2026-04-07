@@ -15,6 +15,8 @@ shopt -s nullglob
 
 [ -n "$DEBUG" ] && set -xv
 
+THREADS=$(nproc 2>/dev/null || echo 4)
+
 # Print colored messages.
 # Usage: msg "message text" "message type" "optional: err"
 # Message types are 'normal', 'hint' or 'warning'. Warnings and messages with a
@@ -402,19 +404,29 @@ get_uris(){
     exit
   fi
   prepare_auth
+ local tmpdir=$(mktemp -d) || {
+    msg "Failed to create tmp dir" "warning"
+    exit 1
+  }
   ## --print-uris format is:
   # 'fileurl' filename filesize checksum_hint:filechecksum
-  while IFS=' ' read -r uri filename filesize checksum_string _
-  do
+  process_package() {
+    local pkg_uri_info="$@"
+
+    local display_line=""
+
+    IFS=' ' read -r uri filename filesize checksum_string _ <<<"$pkg_uri_info"
     [ -z "$uri" ] && continue
     uri="$(get_auth "${uri//"'"/}")"
     IFS=':' read -r hash_algo checksum _ <<<"$checksum_string"
 
     filename_decoded="$(urldecode "$filename")"
     IFS='_' read -r pkg_name_decoded pkg_version_decoded _ <<<"$filename_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$pkg_name_decoded $pkg_version_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY} $(echo "$filesize" | numfmt --to=iec-i --suffix=B)\n"
-    DOWNLOAD_SIZE=$((DOWNLOAD_SIZE + filesize))
+    
+
+
+    display_line="${display_line}$pkg_name_decoded $pkg_version_decoded"
+    display_line="${display_line} $(echo "$filesize" | numfmt --to=iec-i --suffix=B)\n"
 
     ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
     # plain aptitude do not decode it when download and install it. Therefore, we
@@ -432,7 +444,8 @@ get_uris(){
         *) hash_algo=
       esac
 
-      # Using apt-cache show package=version to ensure recover single and
+
+       # Using apt-cache show package=version to ensure recover single and
       # correct package version.
       # Warning: assuming that package naming uses '_' as field separator.
       # Therefore, this code expects package-name_version_arch.deb Otherwise
@@ -475,16 +488,57 @@ get_uris(){
       hash_algo=
     fi
 
-    {
-      get_mirrors "$uri"
-      #echo " dir=$DLDIR"
-      if [ -n "$hash_algo" ]; then
-        echo " checksum=$hash_algo=$checksum"
-      fi
-      echo " out=$filename"
-    } >> "$DLLIST"
-  done <<<"$(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")"
 
+    # Safely write download list with flock
+    (
+      flock -x 200 
+      {
+        get_mirrors "$uri"
+        [ -n "$hash_algo" ] && echo " checksum=$hash_algo=$checksum"
+        echo " out=$filename"
+      } >> "$DLLIST"
+    ) 200>>"$DLLIST" 
+
+
+    echo "$display_line" >> "$tmpdir/display"
+    echo "$filesize" >> "$tmpdir/sizes"
+  }
+  # Init jobs
+  mapfile -t pkg_uri_list < <(echo "$uris_full" | grep -E "^'(http(s|)|(s|)ftp)://")
+  total_pkgs=${#pkg_uri_list[@]}
+  threads=${THREADS:-4}  
+  per_thread=$(( (total_pkgs + threads - 1) / threads ))  
+
+  # Split links
+  for ((i=0; i<threads; i++)); do
+    start=$((i * per_thread))
+    end=$((start + per_thread -1))
+    [ $end -ge $total_pkgs ] && end=$((total_pkgs -1))
+    
+    # Launch jobs
+    (
+      for ((j=start; j<=end; j++)); do
+        [ -z "${pkg_uri_list[j]}" ] && continue
+        process_package "${pkg_uri_list[j]}"
+      done
+    ) &
+  done
+  # Wait for background jobs
+  wait
+
+  # Construct Display Info
+  if [ -f "$tmpdir/display" ]; then
+    DOWNLOAD_DISPLAY+="\n$(cat "$tmpdir/display")"
+  fi
+
+  # Add file size
+  if [ -f "$tmpdir/sizes" ]; then
+    DOWNLOAD_SIZE=$(awk '{sum+=$1} END{print sum}' "$tmpdir/sizes")
+  fi
+
+  # Clean tmpdir
+  rm -rf "$tmpdir"
+  
   #cat "$DLLIST"
   #exit
 }

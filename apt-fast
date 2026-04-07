@@ -283,13 +283,6 @@ exit_cleanup_state()
   exit $CLEANUP_STATE
 }
 
-# decode url string
-# translates %xx but must not convert '+' in spaces
-urldecode()
-{
-    printf '%b' "${1//%/\\x}"
-}
-
 # Check if mirrors are available. And if so add all mirrors to download list.
 get_mirrors(){
   # Check all mirror lists.
@@ -339,15 +332,15 @@ prepare_auth(){
       AUTH_INFO_PARSED+=("$machine $login $password")
     done <<< "$auth_info"
   done
+  if [ "${#AUTH_INFO_PARSED[@]}" -eq 0 ]; then
+    # acts like auth disabled when no auth info is provided to improve performance
+    APT_FAST_APT_AUTH=0
+  fi
 }
 
 # Gets URI as parameter and tries to add basic http credentials. Will fail on
 # credentials that contain characters that need URL-encoding.
 get_auth(){
-  if [ "$APT_FAST_APT_AUTH" -eq 0 ]; then
-    echo "$1"
-    return
-  fi
   for auth_info in "${AUTH_INFO_PARSED[@]}"; do
     # convert to array, don't escape variable here
     auth_info_arr=($auth_info)
@@ -407,14 +400,22 @@ get_uris(){
   while IFS=' ' read -r uri filename filesize checksum_string _
   do
     [ -z "$uri" ] && continue
-    uri="$(get_auth "${uri//"'"/}")"
+    uri="${uri//"'"/}"
+    [ "$APT_FAST_APT_AUTH" -ne 0 ] && uri="$(get_auth "$uri")"
     IFS=':' read -r hash_algo checksum _ <<<"$checksum_string"
 
-    filename_decoded="$(urldecode "$filename")"
+    if [[ "$filename" == *%* ]]; then
+      # decode url string
+      # translates %xx but must not convert '+' in spaces
+      filename_decoded="$(printf '%b' "${filename//%/\\x}")"
+    else
+      # most filenames do not contain %, so skip decoding them to improve the performance.
+      # the overhead of decoding is >1ms due to the use of subshell and printf, while the one of assignment is ~1us.
+      filename_decoded="$filename"
+    fi
     IFS='_' read -r pkg_name_decoded pkg_version_decoded _ <<<"$filename_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY}$pkg_name_decoded $pkg_version_decoded"
-    DOWNLOAD_DISPLAY="${DOWNLOAD_DISPLAY} $(echo "$filesize" | numfmt --to=iec-i --suffix=B)\n"
-    DOWNLOAD_SIZE=$((DOWNLOAD_SIZE + filesize))
+    DOWNLOAD_DISPLAY+="$pkg_name_decoded $pkg_version_decoded $filesize\n"
+    ((DOWNLOAD_SIZE += filesize))
 
     ## whole uri comes encoded (urlencoded). Filename must NOT be decoded because
     # plain aptitude do not decode it when download and install it. Therefore, we
@@ -496,12 +497,13 @@ display_downloadfile(){
     DISPLAY_SORT_OPTIONS=(-k 1,1)
     # Sort output after package download size (decreasing):
     #DISPLAY_SORT_OPTIONS=(-k 3,3 -hr)
+    DISPLAY_NUMFMT_OPTIONS=(--to=iec-i --suffix=B)
     while IFS=' ' read -r pkg ver size _; do
         [ -z "$pkg" ] && continue
         printf '%s%-40s %-20s %10s\n' "$aptfast_prefix" "$pkg" "$ver" "$size"
-    done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}")"
+    done <<<"$(echo -e "$DOWNLOAD_DISPLAY" | sort "${DISPLAY_SORT_OPTIONS[@]}" | numfmt "${DISPLAY_NUMFMT_OPTIONS[@]}" --field=3)"
   fi
-  msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt --to=iec-i --suffix=B)" "normal"
+  msg "Download size: $(echo "$DOWNLOAD_SIZE" | numfmt "${DISPLAY_NUMFMT_OPTIONS[@]}")" "normal"
 }
 
 # Create and insert a PID number to lockfile.
